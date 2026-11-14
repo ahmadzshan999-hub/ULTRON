@@ -1,49 +1,54 @@
 # ULTRON — Supabase setup
 
-This repository currently contains a static GitHub Pages preview. Tasks and notes are still stored in the browser. The SQL in this branch prepares a per-account database; it does **not** connect the website, enable sign-in, or sync existing browser data.
+The current feature branch adds Supabase email magic-link sign-in, per-user task/note cloud sync, and an authenticated AI Edge Function caller. These features are **not live** until the pull requests are reviewed and merged, the database migrations are applied, Auth redirect settings are configured, and the Edge Function is deployed.
 
-## Choose one way to apply the database SQL
+## 1. Apply the database migrations
 
-### Option A — Supabase Dashboard (simplest)
+Use the Supabase SQL Editor in this order:
 
-1. Open the ULTRON project in Supabase.
-2. Open **SQL Editor** and choose **New query**.
-3. Open `supabase/schema.sql` in this repository and copy its full contents.
-4. Paste the SQL into the editor and click **Run**.
-5. Confirm that `tasks` and `notes` appear under **Table Editor**.
+1. Open `supabase/migrations/20261114000000_initial_schema.sql`, copy the full SQL, and run it.
+2. Open `supabase/migrations/20261115000000_ai_rate_limit.sql`, copy the full SQL, and run it.
+3. Confirm that `tasks`, `notes`, and `ultron_ai_usage` exist in Table Editor.
 
-### Option B — Supabase CLI migrations
+Do not run the initial schema twice using both `schema.sql` and the migration. They create the same tasks/notes foundation. The second migration adds the private AI quota table and function.
 
-The versioned migration is in `supabase/migrations/20261114000000_initial_schema.sql`. If you use the Supabase CLI, follow Supabase's current CLI instructions to link your local project and apply pending migrations. Do not apply both Option A and Option B as separate setup steps; they contain the same initial schema.
+## 2. Configure email sign-in
 
-## What the database protections do
+In Supabase Authentication settings:
 
-- Row Level Security (RLS) is enabled on both tables.
-- Only authenticated users receive table CRUD grants.
-- Each policy checks that the row's `user_id` matches the signed-in user's `auth.uid()`.
-- Foreign keys remove a user's rows if their auth account is deleted.
-- The `updated_at` timestamp is refreshed automatically when a task or note is edited.
+1. Enable Email sign-in.
+2. Set the Site URL to `https://ahmadzshan999-hub.github.io`.
+3. Add `https://ahmadzshan999-hub.github.io/ULTRON/` to allowed redirect URLs.
+4. Test the magic-link flow with an account you control.
 
-These protections are important, but they do not replace testing. Before storing real information, test with two separate test accounts and confirm each account can only read and change its own rows.
+The website asks Supabase to send a sign-in link; it does not collect or store a password.
 
-## Project URL and keys
+## 3. Cloud data and privacy
 
-A browser app may use the Supabase **Project URL** and **Publishable key**. A publishable key is designed for public client applications; it is not a secret and does not replace RLS.
+- Tasks and notes are stored per signed-in user.
+- Row Level Security policies restrict records to the authenticated user's `auth.uid()`.
+- On sign-in, the cloud workspace loads. Before sending the sign-in link, the website preserves local browser data so the user can explicitly import it afterward.
+- The import button merges local records into the cloud account; it does not delete unrelated cloud rows.
+- Test with two separate test accounts before storing real information.
 
-**Never put a Secret key or service-role key in HTML, JavaScript, GitHub, or any browser code.** Those keys must stay on a trusted server because they can bypass normal RLS protections. Never put your database password in the repository or in chat.
+A publishable key is public-client configuration and may appear in browser code. RLS must remain enabled. **Never put a Secret/service-role key, database password, or provider key in HTML, JavaScript, GitHub, or chat.**
 
-## Not enabled yet
+## 4. Configure and deploy the AI function
 
-- The current website still uses browser-local storage for tasks and notes.
-- Supabase sign-in and cloud syncing have not been connected.
-- Existing browser-saved tasks and notes are not automatically copied into Supabase.
-- Subscription prices shown in the website are proposals only; checkout and billing are not enabled.
-- The Owner Console is not protected by a real owner authorization system. Do not add an owner password check to frontend JavaScript; owner permissions need trusted server-side authorization.
+The Edge Function is named `ultron-chat`. In Supabase Function Secrets, the account owner must set:
 
-## Before going live
+- `OPENAI_API_KEY` — private provider API key.
+- `OPENAI_MODEL` — a model identifier enabled for that provider account.
 
-1. Apply the schema to a test Supabase project first.
-2. Test account isolation with two separate test users.
-3. Confirm sign-up, sign-in, sign-out, password recovery, and account deletion behavior before adding those features to the site.
-4. Plan a safe export/backup and migration path before moving from browser storage to cloud storage.
-5. Keep billing disabled until a trusted backend verifies payments and subscription status.
+Then deploy the function using the current Supabase CLI or Dashboard instructions. Keep JWT verification enabled. Test a signed-in chat request and confirm that unauthenticated requests are rejected.
+
+The AI endpoint enforces a fixed starter quota of 30 requests per user per rolling hour. This is not a full billing or abuse-prevention system; configure provider spending limits and monitoring too.
+
+## 5. Not included yet
+
+- Gmail, WhatsApp, and calendar integrations (each needs official OAuth/API setup and user permission).
+- Owner Console and owner-only role provisioning.
+- Subscription checkout, payment webhooks, and subscription entitlements.
+- Background wake-word listening; browser wake-word preview needs the page open and visible.
+
+Provider billing and account setup should be handled by a parent/guardian where required. Do not share provider credentials in chat.
