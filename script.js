@@ -6,7 +6,7 @@ const supabaseClient = window.supabase?.createClient && window.ULTRON_CONFIG?.ur
   : null;
 let currentUser=null,chatHistory=[],cloudReady=false;
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2300)}
-function navigate(v){if(v==='owner'&&$('#ownerNav').hidden){v='settings';toast('Owner access is restricted.')}$$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Assistant',tasks:'Tasks',notes:'Notes',settings:'Settings',integrations:'Integrations',plans:'Plans',owner:'Owner Console',voice:'Voice Room'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();if(v==='voice')$('#voiceButton').focus();window.scrollTo({top:0,behavior:'smooth'})}
+function navigate(v){if(v==='owner'&&$('#ownerNav').hidden){v='settings';toast('Owner access is restricted.')}$$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Chat',tasks:'Tasks',notes:'Notes',settings:'Settings',integrations:'Integrations',plans:'Plans',owner:'Owner Console',voice:'Voice Room'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();if(v==='voice')$('#voiceButton').focus();window.scrollTo({top:0,behavior:'smooth'})}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));$$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
 $('#newChat').addEventListener('click',()=>{chatHistory=[];navigate('assistant');$('#chatMessages').innerHTML='';$('#voiceTranscript').innerHTML='<p class="voice-transcript-empty">Your spoken conversations will appear here.</p>';addMessage('assistant',"New conversation started. What's on your mind?")});
 $('#voiceButtonChat').addEventListener('click',()=>navigate('voice'));
@@ -131,7 +131,7 @@ $('#voiceButton').addEventListener('click',()=>{
   if(wakeEnabled){stopWakeRecognition();$('#voiceOrb').classList.remove('voice-active')}
   manualRecognition=new SpeechRecognition();manualRecognition.lang=navigator.language||'en-US';manualRecognition.interimResults=false;manualRecognition.maxAlternatives=1;
   manualRecognition.onstart=()=>{manualListening=true;$('#voiceButton').classList.add('listening');$('#voiceButton').querySelector('strong').textContent='Listening…';voiceStatus('Listening… Speak now.')};
-  manualRecognition.onresult=e=>{$('#chatInput').value=e.results[0][0].transcript;voiceStatus('Voice captured. Review your message, then press send.')};
+  manualRecognition.onresult=e=>{const transcript=e.results[0][0].transcript.trim();$('#chatInput').value=transcript;voiceStatus('You said: '+transcript);processUserCommand(transcript,false)};
   manualRecognition.onerror=e=>voiceStatus('Voice input issue: '+e.error+'. You can type instead.');
   manualRecognition.onend=()=>{manualListening=false;$('#voiceButton').classList.remove('listening');$('#voiceButton').querySelector('strong').textContent='Start speaking';if(wakeEnabled)startWakeListener()};
   try{manualRecognition.start()}catch{voiceStatus('Could not start voice input. Check microphone permission.')}
@@ -162,15 +162,51 @@ async function loadOwnerConsole(){
   $('#ownerNav').hidden=false;
   $('#ownerTasks').textContent=String(data.metrics?.tasks??'—');
   $('#ownerNotes').textContent=String(data.metrics?.notes??'—');$('#ownerGrants').textContent=String(data.metrics?.activeGrants??'—');
-  $('#ownerStatus').textContent='Owner access verified · read-only overview';
+  $('#ownerStatus').textContent='Owner access verified · Mission Control active';
+  renderOwnerActivity(data.recentActivity||[]);
+  await runOwnerDiagnostics();
  }catch(error){
   $('#ownerNav').hidden=true;
   $('#ownerStatus').textContent='Owner access is not assigned or the admin service is not deployed.';
-  $('#ownerTasks').textContent='—';$('#ownerNotes').textContent='—';$('#ownerGrants').textContent='—';
+  $('#ownerTasks').textContent='—';$('#ownerNotes').textContent='—';$('#ownerGrants').textContent='—';$('#ownerActivityList').innerHTML='<p class="owner-activity-empty">Owner activity is unavailable until the audit migration is applied.</p>';
   if($('#view-owner').classList.contains('active-view'))navigate('settings');
  }
 }
 $('#refreshOwner').addEventListener('click',loadOwnerConsole);
+$('#runDiagnostics').addEventListener('click',runOwnerDiagnostics);
+
+function renderOwnerActivity(events){
+ const list=$('#ownerActivityList');list.replaceChildren();
+ $('#ownerActivityCount').textContent=events.length+' event'+(events.length===1?'':'s');
+ if(!events.length){const empty=document.createElement('p');empty.className='owner-activity-empty';empty.textContent='No recorded owner actions yet.';list.append(empty);return}
+ events.forEach(event=>{
+  const row=document.createElement('div');row.className='owner-event';
+  const info=document.createElement('div'),title=document.createElement('strong'),meta=document.createElement('small'),plan=document.createElement('span');
+  title.textContent=(event.action==='grant'?'Granted ':'Revoked ')+(event.plan||'plan').toUpperCase();
+  meta.textContent=(event.target_email_hint||'Account')+' · '+new Date(event.created_at).toLocaleString()+(event.duration?' · '+(event.duration==='forever'?'No expiry':event.duration+' days'):'');
+  plan.className='owner-event-plan';plan.textContent=event.action==='grant'?'COMPLIMENTARY':'REVOKED';
+  info.append(title,meta);row.append(info,plan);list.append(row);
+ });
+}
+async function runOwnerDiagnostics(){
+ const button=$('#runDiagnostics');button.disabled=true;$('#diagnosticMessage').textContent='Running secure configuration checks…';
+ try{
+  const {data,error}=await supabaseClient.functions.invoke('ultron-admin',{body:{action:'diagnostics'}});
+  if(error)throw error;
+  const d=data.diagnostics||{};
+  $('#healthAI').textContent=d.ai==='configured'?'Configured':'Setup needed';
+  $('#healthDB').textContent=d.database==='ready'?'Ready':'Needs setup';
+  $('#healthSecurity').textContent=d.ownerSecurity==='verified'?'Verified':'Not verified';
+  $('#healthChecked').textContent=d.checked_at?new Date(d.checked_at).toLocaleTimeString(): '—';
+  const healthy=d.database==='ready'&&d.ownerSecurity==='verified';
+  $('#ownerHealthBadge').textContent=healthy?(d.ai==='configured'?'Core systems ready':'AI setup needed'):'Attention required';
+  $('#diagnosticMessage').textContent=data.message||'Diagnostics complete.';
+ }catch(error){
+  $('#ownerHealthBadge').textContent='Check failed';$('#diagnosticMessage').textContent=error?.message||'Could not run diagnostics. Check that the latest admin function is deployed.';
+  $('#healthAI').textContent='Unknown';$('#healthDB').textContent='Unknown';$('#healthSecurity').textContent='Owner checked';$('#healthChecked').textContent='—';
+ }finally{button.disabled=false}
+}
+
 
 async function ownerPlanAction(action){
  const email=$('#grantEmail').value.trim();
