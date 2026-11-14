@@ -30,3 +30,25 @@ The function uses the OpenAI Responses API. New integrations should use Response
 ## Not yet connected
 
 The static GitHub Pages frontend still uses local demo replies. There is no sign-in UI yet, so the browser cannot obtain the user JWT required by this endpoint. The function has not been deployed or tested against the user's Supabase project. Do not describe ULTRON as live AI until sign-in, secrets, deployment, frontend invocation, and end-to-end tests are complete.
+
+## Account sign-in and cloud workspace
+
+The website now includes email magic-link sign-in using Supabase Auth. Before using it:
+
+1. In Supabase Authentication settings, enable Email sign-in.
+2. Set the Site URL to `https://ahmadzshan999-hub.github.io`.
+3. Add `https://ahmadzshan999-hub.github.io/ULTRON/` to the allowed redirect URLs.
+4. Apply both database migrations in order:
+   - `20261114000000_initial_schema.sql`
+   - `20261115000000_ai_rate_limit.sql`
+5. Test sign-in, sign-out, RLS isolation with two test accounts, cloud task/note CRUD, and the local-data import flow.
+
+The browser uses only the Supabase Project URL and publishable key. The key is public-client configuration, not a secret; RLS must remain enabled. Never add a Secret/service-role key to the frontend.
+
+## AI usage limit
+
+The AI Edge Function calls `consume_ultron_ai_quota` before contacting the provider. The migration sets a default limit of 30 requests per user per rolling hour. This is a starter safeguard, not a complete billing or abuse-prevention system. Add monitoring and adjust limits only after testing.
+
+## Still requires owner setup
+
+The account owner must configure the provider API key and model name in Supabase Function Secrets, deploy the Edge Function, and verify a signed-in end-to-end chat request. Provider billing and account setup should be handled by a parent/guardian where required. Do not paste provider keys into chat or commit them to GitHub.
