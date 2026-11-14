@@ -29,7 +29,7 @@ The function uses the OpenAI Responses API. New integrations should use Response
 
 ## Not yet connected
 
-The static GitHub Pages frontend still uses local demo replies. There is no sign-in UI yet, so the browser cannot obtain the user JWT required by this endpoint. The function has not been deployed or tested against the user's Supabase project. Do not describe ULTRON as live AI until sign-in, secrets, deployment, frontend invocation, and end-to-end tests are complete.
+The current feature branch includes a Supabase email magic-link sign-in UI and invokes this function for signed-in conversations. The function has not been deployed or tested against the user's Supabase project, and no provider secret/model has been configured. Until those steps are complete, signed-out visitors see local demo replies and signed-in requests may receive a backend-not-ready message. Do not describe ULTRON as live AI until secrets, deployment, and end-to-end tests are complete.
 
 ## Account sign-in and cloud workspace
 
@@ -47,7 +47,7 @@ The browser uses only the Supabase Project URL and publishable key. The key is p
 
 ## AI usage limit
 
-The AI Edge Function calls `consume_ultron_ai_quota` before contacting the provider. The migration sets a default limit of 30 requests per user per rolling hour. This is a starter safeguard, not a complete billing or abuse-prevention system. Add monitoring and adjust limits only after testing.
+The AI Edge Function calls `consume_ultron_ai_quota` before contacting the provider. The migration enforces a fixed limit of 30 requests per user per rolling hour. The limit is fixed in the SQL function so browser callers cannot weaken it by passing custom parameters. This is a starter safeguard, not a complete billing or abuse-prevention system. Add monitoring and adjust limits only after testing.
 
 ## Still requires owner setup
 
