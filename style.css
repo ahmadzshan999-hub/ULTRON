@@ -32,3 +32,14 @@ body.light-mode .account-panel{background:#fff}body.light-mode .account-controls
 @media(max-width:850px){.integration-grid,.plans-grid{grid-template-columns:1fr}}@media(max-width:620px){.owner-stats{grid-template-columns:1fr}.owner-toolbar{align-items:flex-start;flex-direction:column}}
 
 [hidden]{display:none!important}
+
+.owner-grant-panel{margin-top:20px;padding:22px;background:var(--panel);border:1px solid var(--line);border-radius:13px;max-width:760px}
+.owner-grant-panel h2{font:600 18px "Space Grotesk";margin:7px 0}.owner-grant-panel>p{font-size:10px;line-height:1.6;color:#82969c}
+.owner-grant-form{display:grid;gap:9px;margin-top:17px}.owner-grant-form label{font-size:9px;letter-spacing:1px;color:#91a3a7}
+.owner-grant-form input,.owner-grant-form select{width:100%;padding:11px 12px;background:#111d24;border:1px solid var(--line);border-radius:8px;color:var(--text);font:11px "DM Sans"}
+.grant-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grant-options>div{display:grid;gap:8px}
+.owner-grant-form button{justify-self:start;margin-top:5px}.owner-revoke{display:flex;align-items:center;justify-content:space-between;gap:15px;padding-top:17px;margin-top:19px;border-top:1px solid var(--line)}
+.owner-revoke strong,.owner-revoke small{display:block}.owner-revoke strong{font-size:10px}.owner-revoke small{font-size:9px;color:#82969c;margin-top:5px}
+.owner-action-status{min-height:18px;padding:10px 12px;border-radius:8px;background:rgba(119,226,195,.06);color:#a8c9bd;font-size:9px;line-height:1.6}
+@media(max-width:620px){.grant-options{grid-template-columns:1fr}.owner-revoke{align-items:flex-start;flex-direction:column}}
+body.light-mode .owner-grant-form input,body.light-mode .owner-grant-form select{background:#f6faf8;color:#1c3032}
