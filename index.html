@@ -12,7 +12,10 @@
 <button class="nav-item active" data-view="overview"><span class="nav-icon">⌂</span> Overview</button>
 <button class="nav-item" data-view="assistant"><span class="nav-icon">✳</span> AI Assistant</button>
 <button class="nav-item" data-view="tasks"><span class="nav-icon">✓</span> Tasks <span class="nav-count" id="taskCount">0</span></button>
-<button class="nav-item" data-view="notes"><span class="nav-icon">▤</span> Notes <span class="nav-count" id="noteCount">0</span></button></nav>
+<button class="nav-item" data-view="notes"><span class="nav-icon">▤</span> Notes <span class="nav-count" id="noteCount">0</span></button>
+<button class="nav-item" data-view="integrations"><span class="nav-icon">⌘</span> Integrations</button>
+<button class="nav-item" data-view="plans"><span class="nav-icon">◇</span> Plans</button>
+<button class="nav-item" data-view="owner" id="ownerNav" hidden><span class="nav-icon">⬡</span> Owner Console</button></nav>
 <div class="sidebar-bottom"><div class="system-card"><span class="system-dot"></span><div><strong>ULTRON WORKSPACE</strong><small>Account and cloud status shown in Settings</small></div></div>
 <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span> Settings</button>
 <div class="profile"><div class="avatar">U</div><div><strong>Workspace owner</strong><small>Personal workspace</small></div><span class="profile-more">•••</span></div></div></aside>
@@ -56,4 +59,21 @@
 <div class="setting-row"><div><strong>Owner Console</strong><p>Admin controls remain disabled until owner-only server authorization is built and tested.</p></div><span class="setting-value warning-value">Not enabled</span></div>
 <div class="setting-row"><div><strong>Clear local workspace</strong><p>Remove tasks and notes saved in this browser. This cannot be undone.</p></div><button class="danger-button" id="clearData">Clear local data</button></div>
 <p class="settings-footnote">ULTRON preview 0.2 · No email, WhatsApp, calendar, payment or external account is connected. Integrations will require your permission and confirmation for actions such as sending messages.</p></section>
+
+<section class="view" id="view-integrations"><div class="page-intro"><div class="eyebrow">CONNECTED WORKSPACE</div><h1>Apps & <span>Integrations</span></h1><p class="subheading">Connect only the services you choose. ULTRON will ask for permission before accessing or changing anything.</p></div>
+<div class="integration-grid">
+<article class="integration-card"><div class="integration-icon">G</div><div><strong>Gmail</strong><p>Read and organise email after Google authorization. Sending will always require confirmation.</p><span class="integration-status">Not connected · OAuth setup required</span></div></article>
+<article class="integration-card"><div class="integration-icon">▦</div><div><strong>Google Calendar</strong><p>View events and prepare changes after you approve the requested permissions.</p><span class="integration-status">Not connected · OAuth setup required</span></div></article>
+<article class="integration-card"><div class="integration-icon">◉</div><div><strong>WhatsApp Business</strong><p>Official business messaging integration only. This does not connect to personal WhatsApp inboxes.</p><span class="integration-status">Not connected · Meta business setup required</span></div></article>
+</div><p class="settings-footnote">No external account is connected in this build. Never enter another service's password into ULTRON. Use official authorization screens and revoke access from the provider whenever you want.</p></section>
+<section class="view" id="view-plans"><div class="page-intro"><div class="eyebrow">ULTRON MEMBERSHIP</div><h1>Choose your <span>Plan</span></h1><p class="subheading">Plan options are a preview. Checkout is disabled until an account owner configures and verifies a payment provider.</p></div>
+<div class="plans-grid">
+<article class="plan-card"><span class="plan-label">STARTER</span><h2>Free</h2><p>Explore the workspace and organise your tasks and notes.</p><ul><li>Tasks and notes</li><li>Basic voice preview</li><li>Limited AI access after setup</li></ul><button class="secondary-button" disabled>Current preview</button></article>
+<article class="plan-card featured-plan"><span class="plan-label">ADVANCED</span><h2>Plus</h2><p>For people who want more room for everyday productivity.</p><ul><li>Higher AI usage allowance</li><li>Expanded workspace tools</li><li>Connected app features when available</li></ul><button class="secondary-button" disabled>Checkout not configured</button></article>
+<article class="plan-card"><span class="plan-label">POWER USER</span><h2>Pro</h2><p>For advanced workflows after integrations are approved.</p><ul><li>Higher usage limits</li><li>Advanced assistant workflows</li><li>Priority feature access</li></ul><button class="secondary-button" disabled>Checkout not configured</button></article>
+</div><p class="settings-footnote">No prices or paid features are being charged. A parent/guardian or adult account owner must handle any required provider account, billing and verification. Never enter card details in this website chat.</p></section>
+<section class="view" id="view-owner"><div class="page-intro"><div class="eyebrow">RESTRICTED ADMIN AREA</div><h1>Owner <span>Console</span></h1><p class="subheading">Only accounts assigned the owner role by a trusted administrator can access these read-only service totals.</p></div>
+<div class="owner-toolbar"><span id="ownerStatus">Verifying owner permissions…</span><button class="secondary-button" id="refreshOwner" type="button">Refresh overview</button></div>
+<div class="owner-stats"><article class="stat-card"><span>Tasks stored</span><strong id="ownerTasks">—</strong></article><article class="stat-card"><span>Notes stored</span><strong id="ownerNotes">—</strong></article></div>
+<p class="settings-footnote">This first version is read-only. It does not expose private user content, change accounts, or assign owner roles. Role checks happen on the server; hiding this page in the browser is not the security boundary.</p></section>
 </main></div><div class="toast" id="toast" role="status" aria-live="polite"></div></body></html>
