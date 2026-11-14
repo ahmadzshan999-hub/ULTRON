@@ -1,0 +1,32 @@
+# ULTRON AI backend setup
+
+The repository now contains a **backend scaffold**, not a deployed AI service. It keeps the provider key on the server and requires a signed-in Supabase user before accepting chat requests.
+
+## What the Edge Function does
+
+- Accepts authenticated POST requests only; Supabase JWT verification remains enabled.
+- Re-checks the caller's Supabase Auth session.
+- Validates and limits message/history size.
+- Calls the OpenAI Responses API from the server.
+- Reads the model from server configuration and the provider key from a Supabase Function Secret.
+- Returns only the assistant reply; it does not expose provider credentials or raw provider errors.
+
+## Required setup (not performed by this code change)
+
+1. Review and merge the database/auth foundation before using real accounts.
+2. In Supabase, create or configure Supabase Auth sign-in for ULTRON and test user isolation.
+3. Set the Edge Function secrets in the Supabase Dashboard:
+   - `OPENAI_API_KEY`: the provider API key (keep it private; never commit it or paste it into chat).
+   - `OPENAI_MODEL`: a model identifier enabled for the provider account.
+4. Deploy the function named `ultron-chat` using the Supabase CLI or Dashboard.
+5. Configure the deployed function's allowed website origin if ULTRON is moved to a custom domain.
+6. Connect the website's sign-in flow and invoke this function with the user's Supabase session.
+7. Add server-side usage limits, monitoring, and cost controls before inviting other users.
+
+Supabase Edge Functions support server-side third-party API calls and project secrets. Keep JWT verification enabled for user-facing functions. See the official [Edge Functions guide](https://supabase.com/docs/guides/functions), [function authentication guide](https://supabase.com/docs/guides/functions/auth), and [secrets guide](https://supabase.com/docs/guides/functions/secrets).
+
+The function uses the OpenAI Responses API. New integrations should use Responses rather than the retired Assistants API. See the official [Assistants migration guide](https://platform.openai.com/docs/assistants/migration).
+
+## Not yet connected
+
+The static GitHub Pages frontend still uses local demo replies. There is no sign-in UI yet, so the browser cannot obtain the user JWT required by this endpoint. The function has not been deployed or tested against the user's Supabase project. Do not describe ULTRON as live AI until sign-in, secrets, deployment, frontend invocation, and end-to-end tests are complete.
