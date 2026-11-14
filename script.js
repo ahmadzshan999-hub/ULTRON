@@ -54,8 +54,8 @@ async function processUserCommand(text,fromWake){
    const {data,error}=await supabaseClient.functions.invoke('ultron-chat',{body:{message:clean,history:chatHistory.slice(-11,-1)}});
    if(error)throw error;
    if(!data?.reply)throw new Error('No AI reply returned');
-   reply=data.reply;
-  }catch(error){console.error('ULTRON AI request failed',error);reply='I could not reach my AI service. The backend may not be deployed or configured yet.'}
+   reply=data.reply;$('#aiBadge').textContent='Connected';$('#aiStatus').textContent='The protected AI endpoint returned a response successfully.';$('#assistantStatus').innerHTML='<i></i> AI connected · voice replies available';
+  }catch(error){console.error('ULTRON AI request failed',error);reply='I could not reach my AI service. The backend may not be deployed or configured yet.';$('#aiBadge').textContent='Unavailable';$('#assistantStatus').innerHTML='<i></i> AI backend unavailable · check setup'}
  }else{
   reply=localReply(clean);
   if(!currentUser)reply+='\n\nSign in under Settings to use the connected AI service and private cloud workspace.';
@@ -150,7 +150,7 @@ async function refreshAccount(){
  $('#storageBadge').textContent=currentUser?'Cloud sync':'Local only';
  $('#cloudBadge').textContent=currentUser?'Signed in':'Sign in required';
  $('#aiStatus').textContent=currentUser?'AI requests use the protected server function when it is deployed and configured.':'Sign in and configure the server-side provider secret to enable real AI.';
- $('#aiBadge').textContent=currentUser?'Backend setup required':'Setup required';
+ $('#aiBadge').textContent=currentUser?'Backend setup required':'Setup required';$('#assistantStatus').innerHTML='<i></i> '+(currentUser?'Signed in · AI backend setup may still be required':'Demo mode · sign in to enable AI');
  if(currentUser)await loadCloudData();
 }
 async function loadCloudData(){
