@@ -81,3 +81,25 @@ create policy "Users can delete their own notes"
   on public.notes for delete
   to authenticated
   using ((select auth.uid()) = user_id);
+
+-- Keep updated_at accurate whenever a row is edited.
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists tasks_set_updated_at on public.tasks;
+create trigger tasks_set_updated_at
+  before update on public.tasks
+  for each row execute function public.set_updated_at();
+
+drop trigger if exists notes_set_updated_at on public.notes;
+create trigger notes_set_updated_at
+  before update on public.notes
+  for each row execute function public.set_updated_at();
