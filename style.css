@@ -30,3 +30,5 @@ body.light-mode .account-panel{background:#fff}body.light-mode .account-controls
 .integration-status{font-size:9px;color:#d6b47d}.plan-label{font-size:8px;letter-spacing:1.5px;color:var(--mint)}.plan-card h2{margin:0}.plan-card ul{padding-left:17px;margin:0 0 8px}.plan-card button{align-self:flex-start;margin-top:auto}.featured-plan{border-color:rgba(119,226,195,.45);box-shadow:0 0 30px rgba(119,226,195,.06)}
 .owner-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;color:#8da3a5;font-size:10px}.owner-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.owner-stats .stat-card{padding:20px}
 @media(max-width:850px){.integration-grid,.plans-grid{grid-template-columns:1fr}}@media(max-width:620px){.owner-stats{grid-template-columns:1fr}.owner-toolbar{align-items:flex-start;flex-direction:column}}
+
+[hidden]{display:none!important}
