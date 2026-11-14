@@ -190,6 +190,18 @@ $('#grantPlanForm').addEventListener('submit',event=>{event.preventDefault();own
 $('#revokePlanButton').addEventListener('click',()=>ownerPlanAction('revoke'));
 
 
+async function loadMembership(){
+ $('#membershipStatus').hidden=true;
+ if(!currentUser||!supabaseClient)return;
+ const {data,error}=await supabaseClient.from('ultron_entitlements').select('plan,status,expires_at').eq('user_id',currentUser.id).maybeSingle();
+ if(error){console.warn('Membership status unavailable',error.message);return}
+ const active=data&&data.status==='active'&&(!data.expires_at||new Date(data.expires_at).getTime()>Date.now());
+ const plan=active?data.plan:'free';
+ $('#membershipPlan').textContent=plan==='free'?'Free plan':plan.charAt(0).toUpperCase()+plan.slice(1)+' plan';
+ $('#membershipBadge').textContent=plan.toUpperCase();
+ $('#membershipExpiry').textContent=active&&data.expires_at?'Complimentary access until '+new Date(data.expires_at).toLocaleDateString():active?'Complimentary access · no expiry':'Standard access';
+ $('#membershipStatus').hidden=false;
+}
 async function refreshAccount(){
  if(!supabaseClient){$('#accountState').textContent='Not configured';$('#authMessage').textContent='Supabase configuration is missing.';return}
  const {data:{session}}=await supabaseClient.auth.getSession();
@@ -197,6 +209,7 @@ async function refreshAccount(){
  $('#signedOutPanel').hidden=!!currentUser;$('#signedInPanel').hidden=!currentUser;
  $('#accountState').textContent=currentUser?'Signed in':'Signed out';
  $('#signedInEmail').textContent=currentUser?.email||'Signed in';
+ if(currentUser)await loadMembership();else $('#membershipStatus').hidden=true;
  $('#connectionIndicator').innerHTML='<i></i> '+(currentUser?'CLOUD ACCOUNT':'LOCAL MODE');
  $('#storageStatus').textContent=currentUser?'Tasks and notes sync to your private Supabase account.':'Tasks and notes are stored on this device until you sign in.';
  $('#storageBadge').textContent=currentUser?'Cloud sync':'Local only';
