@@ -58,6 +58,10 @@ function runAppCommand(input){
  if(/^(?:show|list|read|what are)\s+(?:me\s+)?(?:my\s+)?tasks$/.test(s)){if(!tasks.length)return "Your task list is empty. Say “add task” followed by what you need to do.";return "Here are your tasks: "+tasks.slice(0,8).map((t,i)=>(i+1)+". "+t.text+(t.done?" — completed":"")).join("; ")}
  const createNote=text.match(/^(?:save|create|add)\s+(?:a\s+)?note\s+(?:called\s+)?(.+?)(?:\s+saying\s+|\s+with content\s+)(.+)$/i);
  if(createNote){notes.unshift({id:crypto.randomUUID(),title:createNote[1].trim().slice(0,90),content:createNote[2].trim().slice(0,5000),created:new Date().toISOString()});saveNotes();return "Saved your note, “"+createNote[1].trim()+"”."}
+ const completeTask=text.match(/^(?:complete|finish|mark done|mark complete)\s+(?:the\s+)?task\s+(.+)$/i);
+ if(completeTask){const target=completeTask[1].toLowerCase().trim(),task=tasks.find(t=>!t.done&&t.text.toLowerCase()===target)||tasks.find(t=>!t.done&&t.text.toLowerCase().includes(target));if(!task)return "I couldn't find an open task matching “"+completeTask[1]+"”.";task.done=true;saveTasks();return "Marked “"+task.text+"” as complete."}
+ if(/^(?:turn on|enable) dark mode$/.test(s)){if(!document.body.classList.contains('light-mode'))toggleTheme();return "Dark mode is on."}
+ if(/^(?:turn on|enable) light mode$/.test(s)){if(document.body.classList.contains('light-mode')===false)toggleTheme();return "Light mode is on."}
  if(/^(?:stop|be quiet|stop talking|silence)$/.test(s)){if('speechSynthesis'in window)window.speechSynthesis.cancel();return "Okay. Voice output stopped."}
  if(/^(?:what can you do|help|commands)$/.test(s))return "I can open Gallery, Tasks, Notes, AI Chat, Voice Room, Settings, Integrations and Plans. You can say “add task finish homework”, “show my tasks”, or “open YouTube”.";
  return null;
@@ -106,8 +110,8 @@ function speakText(text){
 async function processUserCommand(text,fromWake){
  const clean=text.trim();if(!clean)return;
  const send=$('#chatSend');if(send){send.disabled=true;send.classList.add('sending');send.innerHTML='<span>Thinking</span><b>…</b>'}
- const messages=$('#chatMessages');const pending=document.createElement('div');pending.className='message assistant-message typing-indicator';pending.innerHTML='<div class="message-avatar">✳</div><div class="message-body"><strong>ULTRON</strong><p><i></i><i></i><i></i></p></div>';messages.append(pending);messages.scrollTop=messages.scrollHeight;
  addMessage('user',clean);chatHistory.push({role:'user',content:clean});
+ const messages=$('#chatMessages');const pending=document.createElement('div');pending.className='message assistant-message typing-indicator';pending.innerHTML='<div class="message-avatar">✳</div><div class="message-body"><strong>ULTRON</strong><p><i></i><i></i><i></i></p></div>';messages.append(pending);messages.scrollTop=messages.scrollHeight;
  let reply='';const actionReply=runAppCommand(clean);
  if(actionReply!==null){reply=actionReply;}
  else if(currentUser&&supabaseClient){
