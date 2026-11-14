@@ -171,7 +171,7 @@ $('#sendSignInLink').addEventListener('click',async()=>{
  const email=$('#accountEmail').value.trim();
  if(!email){$('#authMessage').textContent='Enter your email address first.';return}
  if(!supabaseClient){$('#authMessage').textContent='Supabase configuration is missing.';return}
- $('#sendSignInLink').disabled=true;$('#authMessage').textContent='Sending your secure sign-in link…';
+ store.set('local_backup',{tasks,notes});$('#sendSignInLink').disabled=true;$('#authMessage').textContent='Sending your secure sign-in link…';
  const {error}=await supabaseClient.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
  $('#sendSignInLink').disabled=false;
  $('#authMessage').textContent=error?'Could not send the link: '+error.message:'Check your email for the ULTRON sign-in link. Open it in this browser to finish signing in.';
@@ -180,17 +180,17 @@ $('#signOut').addEventListener('click',async()=>{
  if(!supabaseClient)return;
  const {error}=await supabaseClient.auth.signOut();
  if(error){toast('Sign out failed.');return}
- currentUser=null;cloudReady=false;await refreshAccount();toast('Signed out');
+ currentUser=null;cloudReady=false;tasks=[];notes=[];store.set('tasks',[]);store.set('notes',[]);renderTasks();renderNotes();renderStats();await refreshAccount();toast('Signed out');
 });
 $('#importLocalData').addEventListener('click',async()=>{
  if(!currentUser||!supabaseClient)return;
- const localTasks=store.get('tasks',[]),localNotes=store.get('notes',[]);
+ const backup=store.get('local_backup',{tasks:[],notes:[]});const localTasks=backup.tasks||[],localNotes=backup.notes||[];
  if(!localTasks.length&&!localNotes.length){toast('There is no local data to import.');return}
  if(!confirm('Import this browser’s saved tasks and notes into your signed-in ULTRON account?'))return;
  try{
   await syncRows('tasks',localTasks.map(t=>({id:t.id,text:t.text,done:!!t.done,created_at:t.created||new Date().toISOString()})));
   await syncRows('notes',localNotes.map(n=>({id:n.id,title:n.title,content:n.content,created_at:n.created||new Date().toISOString()})));
-  await loadCloudData();toast('Local data imported.');
+  await loadCloudData();localStorage.removeItem('ultron_local_backup');toast('Local data imported.');
  }catch(error){console.error(error);toast('Import failed. Check database setup and permissions.')}
 });
 if(supabaseClient)supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;setTimeout(()=>refreshAccount(),0)});
