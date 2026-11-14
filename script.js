@@ -188,8 +188,10 @@ $('#importLocalData').addEventListener('click',async()=>{
  if(!localTasks.length&&!localNotes.length){toast('There is no local data to import.');return}
  if(!confirm('Import this browser’s saved tasks and notes into your signed-in ULTRON account?'))return;
  try{
-  await syncRows('tasks',localTasks.map(t=>({id:t.id,text:t.text,done:!!t.done,created_at:t.created||new Date().toISOString()})));
-  await syncRows('notes',localNotes.map(n=>({id:n.id,title:n.title,content:n.content,created_at:n.created||new Date().toISOString()})));
+  const taskRows=localTasks.map(t=>({id:t.id,text:t.text,done:!!t.done,created_at:t.created||new Date().toISOString(),user_id:currentUser.id}));
+  const noteRows=localNotes.map(n=>({id:n.id,title:n.title,content:n.content,created_at:n.created||new Date().toISOString(),user_id:currentUser.id}));
+  if(taskRows.length){const {error}=await supabaseClient.from('tasks').upsert(taskRows);if(error)throw error;}
+  if(noteRows.length){const {error}=await supabaseClient.from('notes').upsert(noteRows);if(error)throw error;}
   await loadCloudData();localStorage.removeItem('ultron_local_backup');toast('Local data imported.');
  }catch(error){console.error(error);toast('Import failed. Check database setup and permissions.')}
 });
