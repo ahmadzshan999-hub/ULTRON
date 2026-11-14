@@ -10,6 +10,7 @@ In the Supabase SQL Editor, run these files in this order:
 2. `supabase/migrations/20261115000000_ai_rate_limit.sql` — per-user AI request quota.
 3. `supabase/migrations/20261116000000_owner_roles.sql` — server-managed owner roles.
 4. `supabase/migrations/20261117000000_complimentary_entitlements.sql` — private complimentary plan entitlements.
+5. `supabase/migrations/20261118000000_tier_ai_limits.sql` — enforce AI request limits for each plan.
 
 Do not run both `schema.sql` and the first migration; they create the same tasks/notes foundation. Confirm that `tasks`, `notes`, `ultron_ai_usage`, and `ultron_user_roles`, and `ultron_entitlements` exist.
 
