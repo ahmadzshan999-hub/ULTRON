@@ -46,7 +46,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-  if (email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return json({ error: "Enter a valid email address." }, 400, headers);
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Enter a valid email address." }, 400, headers);
   let target: { id: string; email?: string; email_confirmed_at?: string | null } | null = null;
   for (let page = 1; page <= 100; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
