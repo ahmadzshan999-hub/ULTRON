@@ -33,6 +33,11 @@ body.light-mode .message-body p{color:#4d5870}
 .activation-card h2{text-align:center;font:600 clamp(27px,5vw,38px) "Space Grotesk";margin:8px 0 10px}.activation-card h2 span{background:linear-gradient(95deg,#b9a5ff,#77e5dc);-webkit-background-clip:text;background-clip:text;color:transparent}.activation-lead{text-align:center;color:#9ba7bb;line-height:1.7;max-width:510px;margin:0 auto 23px;font-size:12px}.activation-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.activation-secondary{background:#20263a;border:1px solid var(--line);color:#c1c9d8;padding:11px 15px;border-radius:9px;font-size:11px}.activation-step{display:none}.activation-step.active{display:block}.activation-progress{display:flex;align-items:center;justify-content:space-between;color:#8894aa;font-size:10px;margin:4px 0 20px}.activation-progress-track{height:4px;background:#252b3c;border-radius:8px;overflow:hidden;margin-bottom:23px}.activation-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#a48aff,#6ee7df);transition:width .25s}.service-symbol{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(165,139,255,.13);font-size:20px;margin-bottom:15px}.activation-step h3{font:600 22px "Space Grotesk";margin:0 0 8px}.activation-step p{color:#9ba7bb;line-height:1.65;font-size:12px}.permission-detail{background:#0d121e;border:1px solid var(--line);border-radius:11px;padding:13px;margin:16px 0}.permission-detail strong{display:block;font-size:11px;margin-bottom:6px}.permission-detail span{font-size:10px;color:#929db1;line-height:1.6}.permission-choice{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;margin:9px 0;color:#c8d0df;font-size:11px;line-height:1.5}.permission-choice input{accent-color:#a48aff;margin-top:2px}.activation-nav{display:flex;justify-content:space-between;gap:10px;margin-top:22px}.activation-nav button:disabled{opacity:.35;cursor:not-allowed}.activation-note{color:#718097;font-size:9px;line-height:1.6;text-align:center;margin:19px auto 0;max-width:540px}.activation-summary{display:grid;gap:8px;margin:17px 0}.activation-summary div{display:flex;justify-content:space-between;gap:12px;padding:11px;border:1px solid var(--line);border-radius:9px;font-size:11px;color:#c5cddd}.activation-summary small{color:#e3b76f}.activation-done{color:#8ce4ca}
 @media(max-width:600px){.activation-screen{padding:12px}.activation-card{max-height:calc(100vh - 24px);padding:22px 18px}.activation-nav{position:sticky;bottom:0;background:#111725;padding-top:10px}}
 
+
+.owner-link{background:rgba(165,139,255,.09);border:1px solid rgba(165,139,255,.28);color:#cfc4ff;border-radius:8px;padding:8px 10px;font-size:10px;font-weight:600}.owner-link:hover{background:rgba(165,139,255,.17);border-color:#a58bff}
+.plans-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;align-items:stretch}.plan-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:22px;display:flex;flex-direction:column;min-height:350px}.featured-plan{border-color:rgba(165,139,255,.55);box-shadow:0 15px 50px rgba(112,87,204,.12);background:linear-gradient(160deg,rgba(165,139,255,.1),var(--panel) 45%)}.plan-tier{font-size:9px;letter-spacing:1.5px;color:#b8a6ff;font-weight:700}.plan-card h2{font:600 25px "Space Grotesk";margin:13px 0 4px}.plan-price{font:600 22px "Space Grotesk";margin:0 0 10px}.plan-price small{font:400 10px "DM Sans";color:#8290a6}.plan-desc{font-size:11px;color:#9aa6ba;line-height:1.6;min-height:37px}.plan-card ul{padding-left:17px;color:#c2cad8;font-size:11px;line-height:2.1;margin:14px 0 22px}.plan-tag{display:inline-flex;align-self:flex-start;margin-top:auto;padding:7px 9px;border:1px solid rgba(165,139,255,.24);border-radius:7px;color:#c6b8ff;font-size:9px;letter-spacing:1px;font-weight:700}.owner-lock-card{max-width:760px;padding:28px;background:var(--panel);border:1px solid rgba(165,139,255,.25);border-radius:16px}.owner-lock-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(165,139,255,.13);color:#c4b5ff;font-size:23px}.owner-lock-card h2{font:600 23px "Space Grotesk";margin:18px 0 8px}.owner-lock-card>p{color:#9ba7bb;font-size:12px;line-height:1.7}.owner-security-list{display:grid;gap:10px;margin:20px 0}.owner-security-list div{padding:13px;border:1px solid var(--line);border-radius:10px}.owner-security-list strong,.owner-security-list span{display:block}.owner-security-list strong{font-size:11px;margin-bottom:5px}.owner-security-list span{font-size:10px;color:#909cb1;line-height:1.6}
+@media(max-width:900px){.plans-grid{grid-template-columns:1fr}.plan-card{min-height:0}.plan-desc{min-height:0}}@media(max-width:600px){.owner-link{font-size:9px;padding:7px}.top-actions{gap:8px}.local-indicator{display:none}}
+
   </style>
 </head>
 <body>
@@ -91,6 +96,7 @@ body.light-mode .message-body p{color:#4d5870}
         <button class="nav-item" data-view="assistant"><span class="nav-icon">✳</span> AI Assistant</button>
         <button class="nav-item" data-view="tasks"><span class="nav-icon">✓</span> Tasks <span class="nav-count" id="taskCount">0</span></button>
         <button class="nav-item" data-view="notes"><span class="nav-icon">▤</span> Notes</button>
+        <button class="nav-item" data-view="plans"><span class="nav-icon">◇</span> Plans</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="status-card"><span class="status-pulse"></span><div><strong>Workspace ready</strong><small>Your space is running locally</small></div></div>
@@ -103,7 +109,7 @@ body.light-mode .message-body p{color:#4d5870}
       <header class="topbar">
         <button class="mobile-menu" id="mobileMenu" aria-label="Toggle menu">☰</button>
         <div class="breadcrumb">Workspace <span>/</span> <strong id="pageName">Overview</strong></div>
-        <div class="top-actions"><span class="local-indicator"><i></i> LOCAL MODE</span><button class="icon-button" id="themeToggle" aria-label="Toggle theme">◐</button></div>
+        <div class="top-actions"><button class="owner-link" id="ownerShortcut" type="button">♙ Owner Console</button><span class="local-indicator"><i></i> LOCAL MODE</span><button class="icon-button" id="themeToggle" aria-label="Toggle theme">◐</button></div>
       </header>
 
       <section class="view active-view" id="view-overview">
@@ -133,6 +139,20 @@ body.light-mode .message-body p{color:#4d5870}
       <section class="view" id="view-settings">
         <div class="page-intro"><div class="eyebrow">MAKE IT YOURS</div><h1>Workspace <span>Settings</span></h1><p class="subheading">A few details about how this preview works.</p></div>
         <div class="settings-panel"><div class="setting-row"><div><strong>Workspace name</strong><p>Your personal assistant workspace.</p></div><span class="setting-value">ULTRON</span></div><div class="setting-row"><div><strong>App version</strong><p>Early website preview.</p></div><span class="setting-value">0.1.0</span></div><div class="setting-row"><div><strong>Data storage</strong><p>Tasks and notes are saved in this browser on this device.</p></div><span class="setting-value"><i></i> Local storage</span></div><div class="setting-row"><div><strong>AI connection</strong><p>A live AI model is not connected in this version.</p></div><span class="setting-value warning-value">Not connected</span></div><div class="setting-row danger-row"><div><strong>Clear local data</strong><p>Delete all ULTRON tasks and notes saved in this browser.</p></div><button class="danger-button" id="clearData">Clear data</button></div></div><p class="settings-footnote">Your data stays in this browser. Clearing browser data may also remove it. This preview does not send your notes or tasks to a server.</p>
+
+      <section class="view" id="view-plans">
+        <div class="page-intro"><div class="eyebrow">PLANS THAT GROW WITH YOU</div><h1>Choose your <span>ULTRON plan.</span></h1><p class="subheading">Start free. Upgrade when you need more power. These are proposed plans; payments are not enabled in this preview.</p></div>
+        <div class="plans-grid">
+          <article class="plan-card"><div class="plan-tier">STARTER</div><h2>Free</h2><p class="plan-price">Rs 0 <small>/ forever</small></p><p class="plan-desc">For trying ULTRON and organising everyday work.</p><ul><li>Basic workspace and notes</li><li>Personal task manager</li><li>Limited AI conversations when connected</li><li>One personal setup profile</li></ul><span class="plan-tag">GET STARTED</span></article>
+          <article class="plan-card featured-plan"><div class="plan-tier">MOST POPULAR</div><h2>Plus</h2><p class="plan-price">Rs 799 <small>/ month · proposed</small></p><p class="plan-desc">For people who want more help with their day.</p><ul><li>Higher AI usage allowance</li><li>Voice conversations</li><li>Connected calendar and email tools</li><li>More automations and saved workflows</li><li>Priority feature access</li></ul><span class="plan-tag">COMING LATER</span></article>
+          <article class="plan-card"><div class="plan-tier">POWER USERS</div><h2>Pro</h2><p class="plan-price">Rs 1,999 <small>/ month · proposed</small></p><p class="plan-desc">For advanced workflows and multiple connected services.</p><ul><li>Higher usage limits</li><li>Advanced agent workflows</li><li>Expanded integrations</li><li>Custom routines and reports</li><li>Priority support</li></ul><span class="plan-tag">COMING LATER</span></article>
+        </div>
+        <p class="settings-footnote">Prices are planning examples, not active offers. Final pricing, taxes, payment provider, cancellation rules, and feature limits must be decided before launch. No payment details are collected here.</p>
+      </section>
+      <section class="view" id="view-owner">
+        <div class="page-intro"><div class="eyebrow">RESTRICTED MANAGEMENT AREA</div><h1>Owner <span>Console</span></h1><p class="subheading">A private control centre for the person who owns ULTRON.</p></div>
+        <div class="owner-lock-card"><div class="owner-lock-icon">♙</div><h2>Owner access is not enabled yet.</h2><p>This preview is hosted as a static website. A button or password check inside browser code cannot securely protect an owner account.</p><div class="owner-security-list"><div><strong>What will be protected</strong><span>Account management, subscription settings, service integrations, system health and audit logs.</span></div><div><strong>How access will work</strong><span>Server-side authentication, a unique owner account, strong password hashing, secure sessions and optional two-factor authentication.</span></div><div><strong>Owner identity</strong><span>The owner account will be created privately during backend setup. No password is stored in this website.</span></div></div><span class="plan-tag">SECURE BACKEND REQUIRED</span></div>
+      </section>
       </section>
     </main>
   </div>
@@ -155,13 +175,14 @@ function toast(message){ const el=$('#toast'); el.textContent=message; el.classL
 function navigate(view){
   $$('.view').forEach(v=>v.classList.toggle('active-view',v.id==='view-'+view));
   $$('.nav-item[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
-  const labels={overview:'Overview',assistant:'AI Assistant',tasks:'Tasks',notes:'Notes',settings:'Settings'};
+  const labels={overview:'Overview',assistant:'AI Assistant',tasks:'Tasks',notes:'Notes',plans:'Plans',owner:'Owner Console',settings:'Settings'};
   $('#pageName').textContent=labels[view]||'Overview';
   $('#sidebar').classList.remove('open');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
+$('#ownerShortcut').addEventListener('click',()=>navigate('owner'));
 $('#newChat').addEventListener('click',()=>{navigate('assistant');$('#chatMessages').innerHTML='';addMessage('assistant',"New conversation started. What's on your mind?");});
 $('#mobileMenu').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
 $('#todayDate').textContent=new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(new Date());
