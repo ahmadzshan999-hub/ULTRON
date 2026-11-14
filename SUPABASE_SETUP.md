@@ -9,8 +9,9 @@ In the Supabase SQL Editor, run these files in this order:
 1. `supabase/migrations/20261114000000_initial_schema.sql` — private tasks and notes tables with Row Level Security.
 2. `supabase/migrations/20261115000000_ai_rate_limit.sql` — per-user AI request quota.
 3. `supabase/migrations/20261116000000_owner_roles.sql` — server-managed owner roles.
+4. `supabase/migrations/20261117000000_complimentary_entitlements.sql` — private complimentary plan entitlements.
 
-Do not run both `schema.sql` and the first migration; they create the same tasks/notes foundation. Confirm that `tasks`, `notes`, `ultron_ai_usage`, and `ultron_user_roles` exist.
+Do not run both `schema.sql` and the first migration; they create the same tasks/notes foundation. Confirm that `tasks`, `notes`, `ultron_ai_usage`, and `ultron_user_roles`, and `ultron_entitlements` exist.
 
 ## 2. Configure email sign-in
 
@@ -61,7 +62,12 @@ on conflict (user_id) do update set role = excluded.role;
 
 The service-role key is used only inside the server function after the user's owner role is verified. Never put it in frontend files, GitHub, or chat. Do not share the UUID or secret with ChatGPT.
 
-## 6. Integrations and subscriptions
+
+## 6. Complimentary Plus and Pro grants
+
+The Owner Console can grant Plus or Pro at no charge to an existing ULTRON account. The recipient must sign up and verify their email first. Enter that exact email in Owner Console, choose a plan and choose 30 days, 90 days, one year, or no expiry. The owner can revoke the grant by email. No payment is taken. Apply migration 20261117000000_complimentary_entitlements.sql and redeploy ultron-admin before using these controls. Entitlements are recorded securely, but Plus/Pro feature limits still need to be enforced in product services before those tiers are treated as fully active.
+
+## 7. Integrations and subscriptions
 
 - Gmail and Google Calendar need a Google Cloud project, OAuth consent configuration, redirect URLs, and protected server-side credentials.
 - WhatsApp requires the official WhatsApp Business Platform / Cloud API and an eligible business account; it does not provide a general personal WhatsApp inbox connection.
@@ -69,6 +75,6 @@ The service-role key is used only inside the server function after the user's ow
 
 No external account is connected and no payment is being collected by this preview. Do not enter card details or external account passwords into ULTRON chat.
 
-## 7. Voice limitations
+## 8. Voice limitations
 
 Browser wake-word listening requires a supported browser, microphone permission, and the ULTRON tab open and visible. A web page cannot listen for a wake word after the browser is closed. A native app or supported operating-system integration would be needed for that.
