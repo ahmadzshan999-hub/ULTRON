@@ -199,9 +199,13 @@ $('#voiceButton').addEventListener('click',()=>{
   if(!SpeechRecognition){voiceStatus('Voice input is not supported in this browser. Use the chat screen to type instead.');toast('Voice input is not supported here');return}
   if(manualListening){try{manualRecognition.stop()}catch{}return}
   if(wakeEnabled){stopWakeRecognition();$('#voiceOrb').classList.remove('voice-active')}
-  manualRecognition=new SpeechRecognition();manualRecognition.lang=navigator.language||'en-US';manualRecognition.interimResults=false;manualRecognition.maxAlternatives=1;
+  manualRecognition=new SpeechRecognition();manualRecognition.lang=navigator.language||'en-US';manualRecognition.interimResults=true;manualRecognition.maxAlternatives=1;
   manualRecognition.onstart=()=>{manualListening=true;$('#voiceButton').classList.add('listening');$('#voiceButton').querySelector('strong').textContent='Listening…';voiceStatus('Listening… Speak now.')};
-  manualRecognition.onresult=e=>{const transcript=e.results[0][0].transcript.trim();$('#chatInput').value=transcript;voiceStatus('You said: '+transcript);processUserCommand(transcript,false)};
+  manualRecognition.onresult=e=>{
+   const result=e.results[e.results.length-1],transcript=result[0].transcript.trim();
+   if(!result.isFinal){voiceStatus('I hear: '+transcript);return}
+   $('#chatInput').value=transcript;voiceStatus('You said: '+transcript);processUserCommand(transcript,false);
+ };
   manualRecognition.onerror=e=>voiceStatus('Voice input issue: '+e.error+'. You can type instead.');
   manualRecognition.onend=()=>{manualListening=false;$('#voiceButton').classList.remove('listening');$('#voiceButton').querySelector('strong').textContent='Tap to talk';if(wakeEnabled)startWakeListener()};
   try{manualRecognition.start()}catch{voiceStatus('Could not start voice input. Check microphone permission.')}
