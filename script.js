@@ -6,7 +6,7 @@ const supabaseClient = window.supabase?.createClient && window.ULTRON_CONFIG?.ur
   : null;
 let currentUser=null,chatHistory=[],cloudReady=false;
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2300)}
-function navigate(v){if(v==='owner'&&$('#ownerNav').hidden){v='settings';toast('Owner access is restricted.')}$$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Chat',tasks:'Tasks',notes:'Notes',settings:'Settings',integrations:'Integrations',plans:'Plans',owner:'Owner Console',voice:'Voice Room'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();if(v==='voice')$('#voiceButton').focus();window.scrollTo({top:0,behavior:'smooth'})}
+function navigate(v){if(v==='owner'&&$('#ownerNav').hidden){v='settings';toast('Owner access is restricted.')}if(v!=='voice'&&typeof wakeEnabled!=='undefined'&&wakeEnabled){wakeEnabled=false;stopWakeRecognition();$('#wakeToggle').textContent='Enable wake word';$('#voiceOrb').classList.remove('voice-active')}if(v!=='voice'&&typeof manualListening!=='undefined'&&manualListening){try{manualRecognition.stop()}catch{}}$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Chat',tasks:'Tasks',notes:'Notes',settings:'Settings',integrations:'Integrations',plans:'Plans',owner:'Owner Console',voice:'Voice Room'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();if(v==='voice')$('#voiceButton').focus();window.scrollTo({top:0,behavior:'smooth'})}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));$$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
 $('#newChat').addEventListener('click',()=>{chatHistory=[];navigate('assistant');$('#chatMessages').innerHTML='';$('#voiceTranscript').innerHTML='<p class="voice-transcript-empty">Your spoken conversations will appear here.</p>';addMessage('assistant',"New conversation started. What's on your mind?")});
 $('#voiceButtonChat').addEventListener('click',()=>navigate('voice'));
@@ -64,7 +64,7 @@ async function processUserCommand(text,fromWake){
  }
  chatHistory.push({role:'assistant',content:reply});chatHistory=chatHistory.slice(-12);
  addMessage('assistant',reply);voiceStatus(currentUser?'AI response ready.':'Demo mode. Sign in to enable real AI.');
- await speakText(reply);
+ if(fromWake||$('#view-voice').classList.contains('active-view'))await speakText(reply);
  if(wakeEnabled&&fromWake)setTimeout(startWakeListener,700);
 }
 function stopWakeRecognition(){
