@@ -39,7 +39,7 @@ begin
     request_count = case
       when current_usage.window_started_at <= now() - make_interval(secs => p_window_seconds)
       then 1
-      else usage.request_count + 1
+      else current_usage.request_count + 1
     end
   returning request_count <= p_limit into v_allowed;
 
