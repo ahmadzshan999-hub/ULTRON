@@ -159,7 +159,7 @@ function localReply(input){
   return "Thanks for sharing that. This ULTRON preview currently uses a small set of local demo responses rather than a live AI model. You can still use the Tasks and Notes sections to organise your next steps.";
 }
 $('#chatForm').addEventListener('submit',e=>{e.preventDefault();const input=$('#chatInput'),text=input.value.trim();if(!text)return;addMessage('user',text);input.value='';setTimeout(()=>addMessage('assistant',localReply(text)),250);});
-$('.suggestion').forEach(b=>b.addEventListener('click',()=>{$('#chatInput').value=b.textContent;$('#chatForm').requestSubmit();}));
+$$('.suggestion').forEach(b=>b.addEventListener('click',()=>{$('#chatInput').value=b.textContent;$('#chatForm').requestSubmit();}));
 $('#clearChat').addEventListener('click',()=>{if('speechSynthesis' in window)window.speechSynthesis.cancel();$('#chatMessages').innerHTML='';addMessage('assistant','Conversation cleared. What would you like to explore next?');});
 const voiceStatus=$('#voiceStatus');
 $('#speakToggle').addEventListener('click',()=>{speakReplies=!speakReplies;$('#speakToggle').classList.toggle('active',speakReplies);if(!speakReplies&&'speechSynthesis' in window)window.speechSynthesis.cancel();voiceStatus.textContent=speakReplies?'Spoken replies are on.':'Spoken replies are off.';});
