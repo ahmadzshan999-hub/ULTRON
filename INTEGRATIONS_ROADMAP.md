@@ -13,7 +13,7 @@ Before enabling the console:
 - Log administrative actions and protect account-wide operations with confirmation.
 - Keep the console hidden until the server confirms the owner role.
 
-No owner role is assigned and no admin console is enabled in this preview.
+The feature branch now includes a read-only Owner Console. It stays hidden unless the authenticated `ultron-admin` Edge Function verifies the user's `owner` role. Apply the owner-role migration, assign the role through the Supabase SQL Editor, configure `SUPABASE_SERVICE_ROLE_KEY` in Function Secrets, and deploy the function before the console can display its aggregate task/note counts.
 
 ## 2. Gmail and Google Calendar
 
