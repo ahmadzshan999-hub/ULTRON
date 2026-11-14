@@ -25,19 +25,19 @@ begin
     return false;
   end if;
 
-  insert into public.ultron_ai_usage as usage (
+  insert into public.ultron_ai_usage as current_usage (
     user_id, window_started_at, request_count
   )
   values (v_user_id, now(), 1)
   on conflict (user_id) do update
   set
     window_started_at = case
-      when usage.window_started_at <= now() - make_interval(secs => p_window_seconds)
+      when current_usage.window_started_at <= now() - make_interval(secs => p_window_seconds)
       then now()
-      else usage.window_started_at
+      else current_usage.window_started_at
     end,
     request_count = case
-      when usage.window_started_at <= now() - make_interval(secs => p_window_seconds)
+      when current_usage.window_started_at <= now() - make_interval(secs => p_window_seconds)
       then 1
       else usage.request_count + 1
     end
