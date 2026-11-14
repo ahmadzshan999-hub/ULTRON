@@ -1,31 +1,49 @@
 # ULTRON — Supabase setup
 
-This repository currently contains a static GitHub Pages preview. Its tasks and notes are stored in the browser. This migration prepares a secure per-account database, but **does not connect the website to it yet**.
+This repository currently contains a static GitHub Pages preview. Tasks and notes are still stored in the browser. The SQL in this branch prepares a per-account database; it does **not** connect the website, enable sign-in, or sync existing browser data.
 
-## 1. Create the tables
+## Choose one way to apply the database SQL
 
-1. Open your ULTRON project in Supabase.
-2. Open **SQL Editor**.
-3. Choose **New query**.
-4. Open `supabase/schema.sql` in this repository and copy its full contents.
-5. Paste the SQL into the editor and click **Run**.
-6. Confirm that `tasks` and `notes` appear under **Table Editor**.
+### Option A — Supabase Dashboard (simplest)
 
-The script enables Row Level Security (RLS), grants access only to authenticated users, and adds policies that restrict each user to rows whose `user_id` matches their signed-in account.
+1. Open the ULTRON project in Supabase.
+2. Open **SQL Editor** and choose **New query**.
+3. Open `supabase/schema.sql` in this repository and copy its full contents.
+4. Paste the SQL into the editor and click **Run**.
+5. Confirm that `tasks` and `notes` appear under **Table Editor**.
 
-## 2. Keys and project URL
+### Option B — Supabase CLI migrations
 
-The browser app may use the **Project URL** and **Publishable key**. A publishable key is intended for public client applications; it is not a replacement for RLS.
+The versioned migration is in `supabase/migrations/20261114000000_initial_schema.sql`. If you use the Supabase CLI, follow Supabase's current CLI instructions to link your local project and apply pending migrations. Do not apply both Option A and Option B as separate setup steps; they contain the same initial schema.
 
-**Never put a Secret key or service-role key in HTML, JavaScript, GitHub, or any browser code.** Those keys bypass normal RLS protections and must stay on a trusted server.
+## What the database protections do
 
-## 3. What is not enabled yet
+- Row Level Security (RLS) is enabled on both tables.
+- Only authenticated users receive table CRUD grants.
+- Each policy checks that the row's `user_id` matches the signed-in user's `auth.uid()`.
+- Foreign keys remove a user's rows if their auth account is deleted.
+- The `updated_at` timestamp is refreshed automatically when a task or note is edited.
+
+These protections are important, but they do not replace testing. Before storing real information, test with two separate test accounts and confirm each account can only read and change its own rows.
+
+## Project URL and keys
+
+A browser app may use the Supabase **Project URL** and **Publishable key**. A publishable key is designed for public client applications; it is not a secret and does not replace RLS.
+
+**Never put a Secret key or service-role key in HTML, JavaScript, GitHub, or any browser code.** Those keys must stay on a trusted server because they can bypass normal RLS protections. Never put your database password in the repository or in chat.
+
+## Not enabled yet
 
 - The current website still uses browser-local storage for tasks and notes.
-- Supabase sign-in and cloud syncing are a separate next step.
-- Subscription prices shown in the website are proposals only; there is no checkout or billing.
-- The Owner Console remains locked. Do not add an owner password check to frontend JavaScript. Owner permissions need trusted server-side authorization.
+- Supabase sign-in and cloud syncing have not been connected.
+- Existing browser-saved tasks and notes are not automatically copied into Supabase.
+- Subscription prices shown in the website are proposals only; checkout and billing are not enabled.
+- The Owner Console is not protected by a real owner authorization system. Do not add an owner password check to frontend JavaScript; owner permissions need trusted server-side authorization.
 
-## 4. Data safety
+## Before going live
 
-Run the SQL only in the ULTRON Supabase project. Do not paste database passwords or Secret keys into chat or GitHub. Test with a non-sensitive account and sample tasks before storing anything important.
+1. Apply the schema to a test Supabase project first.
+2. Test account isolation with two separate test users.
+3. Confirm sign-up, sign-in, sign-out, password recovery, and account deletion behavior before adding those features to the site.
+4. Plan a safe export/backup and migration path before moving from browser storage to cloud storage.
+5. Keep billing disabled until a trusted backend verifies payments and subscription status.
