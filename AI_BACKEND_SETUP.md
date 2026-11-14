@@ -20,8 +20,8 @@ The repository now contains a **backend scaffold**, not a deployed AI service. I
    - `OPENAI_MODEL`: a model identifier enabled for the provider account.
 4. Deploy the function named `ultron-chat` using the Supabase CLI or Dashboard.
 5. Configure the deployed function's allowed website origin if ULTRON is moved to a custom domain.
-6. Connect the website's sign-in flow and invoke this function with the user's Supabase session.
-7. Add server-side usage limits, monitoring, and cost controls before inviting other users.
+6. The feature branch already invokes this function with the signed-in user's Supabase session; merge and deploy the reviewed frontend changes before testing.
+7. Apply the AI quota migration, then add monitoring and provider-side spending controls before inviting other users.
 
 Supabase Edge Functions support server-side third-party API calls and project secrets. Keep JWT verification enabled for user-facing functions. See the official [Edge Functions guide](https://supabase.com/docs/guides/functions), [function authentication guide](https://supabase.com/docs/guides/functions/auth), and [secrets guide](https://supabase.com/docs/guides/functions/secrets).
 
