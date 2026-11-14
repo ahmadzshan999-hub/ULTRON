@@ -48,3 +48,38 @@ body.light-mode .owner-grant-form input,body.light-mode .owner-grant-form select
 .membership-status strong,.membership-status small{display:block}.membership-status strong{font:600 13px "Space Grotesk";margin-top:4px}.membership-status small{font-size:9px;color:#82969c;margin-top:4px}
 .membership-pill{font-size:9px;letter-spacing:1px;padding:6px 9px;border-radius:20px;border:1px solid rgba(119,226,195,.35);color:var(--mint)}
 body.light-mode .membership-status{background:#f4faf7}
+
+/* Dedicated ULTRON Voice Room */
+.voice-room-panel{position:relative;overflow:hidden;max-width:900px;margin:18px auto 40px;padding:24px;border:1px solid var(--line);border-radius:20px;background:radial-gradient(circle at 50% 34%,rgba(95,211,194,.12),transparent 35%),var(--panel);text-align:center}
+.voice-room-top{display:flex;align-items:center;gap:9px;text-align:left;color:#8ca3a8;font-size:9px;letter-spacing:1.2px}
+.voice-live-dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint)}
+.voice-room-tag{margin-left:auto;color:#778c91;font-size:8px}
+.voice-room-orb-wrap{position:relative;display:grid;place-items:center;min-height:250px}
+.voice-room-orb{position:relative;z-index:2;width:150px;height:150px;font-size:34px;box-shadow:0 0 65px rgba(90,218,196,.15)}
+.voice-room-rings{position:absolute;width:225px;height:225px;border:1px solid rgba(119,226,195,.13);border-radius:50%;box-shadow:0 0 0 22px rgba(119,226,195,.025),0 0 0 44px rgba(119,226,195,.018)}
+.voice-room-panel h2{font:600 24px "Space Grotesk";margin:0}.voice-room-lead{max-width:500px;margin:10px auto 20px;color:#8da1a7;font-size:11px;line-height:1.7}
+.voice-room-controls{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px}
+.voice-launch-button{display:flex;align-items:center;gap:11px;padding:13px 20px;border:1px solid rgba(119,226,195,.45);border-radius:12px;background:linear-gradient(135deg,rgba(119,226,195,.2),rgba(89,142,190,.14));color:var(--text);cursor:pointer;font:600 11px "DM Sans"}
+.voice-launch-button>span{font-size:19px}.voice-launch-button.listening{background:rgba(239,174,111,.15);border-color:#dba96e;box-shadow:0 0 25px rgba(239,174,111,.12)}
+.voice-status-panel{max-width:650px;margin:22px auto 0;padding:14px 16px;text-align:left;border:1px solid var(--line);border-radius:11px;background:rgba(5,12,18,.22)}
+.voice-status-panel strong{display:block;margin:6px 0;font-size:11px}.voice-status-panel p{margin:0;color:#83999e;font-size:9px;line-height:1.6}
+.voice-transcript{max-width:700px;margin:20px auto 0;text-align:left;border-top:1px solid var(--line);padding-top:17px}
+.voice-transcript-heading,.owner-activity-heading,.owner-system-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.voice-transcript-heading strong{font:600 12px "Space Grotesk"}.voice-transcript-list{display:grid;gap:9px;margin-top:12px;max-height:260px;overflow:auto}
+.voice-transcript-empty{color:#778c91;font-size:10px;text-align:center;padding:16px}
+.voice-transcript-line{padding:10px 12px;border-radius:9px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.voice-transcript-line strong{font-size:8px;letter-spacing:1px;color:var(--mint)}.voice-transcript-line p{font-size:10px;line-height:1.6;margin:5px 0 0;white-space:pre-wrap}
+.transcript-user{margin-left:12%}.transcript-assistant{margin-right:12%}
+.owner-toolbar-actions{display:flex;gap:8px;flex-wrap:wrap}.owner-system-panel,.owner-activity-panel{margin-top:16px;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:13px}
+.owner-system-heading h2,.owner-activity-heading h2,.owner-shortcuts h2{font:600 16px "Space Grotesk";margin:5px 0}
+.owner-health-badge,.owner-activity-count{font-size:9px;letter-spacing:.5px;padding:7px 10px;border:1px solid var(--line);border-radius:30px;color:#93aaa8}
+.owner-health-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:15px}
+.health-item{padding:12px;border-radius:9px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.health-item span,.health-item strong{display:block}.health-item span{font-size:9px;color:#84999e}.health-item strong{font-size:11px;margin-top:7px}
+.owner-diagnostic-note,.owner-activity-heading p{font-size:9px;color:#83999e;line-height:1.6;margin:12px 0 0}
+.owner-activity-list{display:grid;gap:8px;margin-top:15px}.owner-event{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:9px}
+.owner-event strong,.owner-event small{display:block}.owner-event strong{font-size:10px}.owner-event small{font-size:9px;color:#83999e;margin-top:4px}
+.owner-event-plan{font-size:9px;color:var(--mint);white-space:nowrap}.owner-activity-empty{font-size:10px;color:#83999e;padding:10px}
+.owner-shortcuts{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:17px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.owner-shortcuts>div{margin-right:auto}
+@media(max-width:720px){.owner-health-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.voice-room-panel{padding:17px}.voice-room-orb-wrap{min-height:210px}.voice-room-orb{width:128px;height:128px}.owner-event{align-items:flex-start;flex-direction:column}}
