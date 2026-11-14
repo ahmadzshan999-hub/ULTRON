@@ -71,10 +71,11 @@ Deno.serve(async (req: Request) => {
   }
   if (action === "revoke") {
     const now = new Date().toISOString();
-    const { error } = await admin.from("ultron_entitlements").update({
+    const { data: revoked, error } = await admin.from("ultron_entitlements").update({
       plan: "free", status: "revoked", expires_at: now, granted_by: user.id, updated_at: now,
-    }).eq("user_id", target.id);
+    }).eq("user_id", target.id).select("user_id").maybeSingle();
     if (error) return json({ error: "Could not revoke the plan." }, 503, headers);
+    if (!revoked) return json({ error: "That account has no complimentary upgrade to revoke." }, 404, headers);
     return json({ ok: true, email: target.email, message: "Complimentary paid-plan access revoked." }, 200, headers);
   }
   return json({ error: "Unknown owner action." }, 400, headers);
