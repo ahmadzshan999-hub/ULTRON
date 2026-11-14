@@ -43,3 +43,8 @@ body.light-mode .account-panel{background:#fff}body.light-mode .account-controls
 .owner-action-status{min-height:18px;padding:10px 12px;border-radius:8px;background:rgba(119,226,195,.06);color:#a8c9bd;font-size:9px;line-height:1.6}
 @media(max-width:620px){.grant-options{grid-template-columns:1fr}.owner-revoke{align-items:flex-start;flex-direction:column}}
 body.light-mode .owner-grant-form input,body.light-mode .owner-grant-form select{background:#f6faf8;color:#1c3032}
+
+.membership-status{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:13px 15px;margin-top:15px;border:1px solid var(--line);border-radius:10px;background:rgba(119,226,195,.045)}
+.membership-status strong,.membership-status small{display:block}.membership-status strong{font:600 13px "Space Grotesk";margin-top:4px}.membership-status small{font-size:9px;color:#82969c;margin-top:4px}
+.membership-pill{font-size:9px;letter-spacing:1px;padding:6px 9px;border-radius:20px;border:1px solid rgba(119,226,195,.35);color:var(--mint)}
+body.light-mode .membership-status{background:#f4faf7}
