@@ -16,7 +16,7 @@
 <button class="nav-item" data-view="integrations"><span class="nav-icon">⌘</span> Integrations</button>
 <button class="nav-item" data-view="plans"><span class="nav-icon">◇</span> Plans</button>
 <button class="nav-item" data-view="owner" id="ownerNav" hidden><span class="nav-icon">⬡</span> Owner Console</button></nav>
-<div class="sidebar-bottom"><div class="system-card"><span class="system-dot"></span><div><strong>ULTRON WORKSPACE</strong><small>Account and cloud status shown in Settings</small></div></div>
+<div class="sidebar-bottom"><div class="system-card"><span class="system-dot"></span><div><strong>ULTRON WORKSPACE</strong><small>Private workspace · account status in Settings</small></div></div>
 <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span> Settings</button>
 <div class="profile"><div class="avatar">U</div><div><strong>Workspace owner</strong><small>Personal workspace</small></div><span class="profile-more">•••</span></div></div></aside>
 <main class="main-area"><header class="topbar"><div class="topbar-left"><button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button><div class="breadcrumb">Workspace <span>/</span> <strong id="pageName">Overview</strong></div></div><div class="top-actions"><span class="local-indicator" id="connectionIndicator"><i></i> LOCAL MODE</span><button class="icon-button" id="themeToggle" title="Toggle light mode" aria-label="Toggle light mode">◐</button></div></header>
@@ -56,8 +56,8 @@
 <div class="setting-row"><div><strong>Cloud sync & account sign-in</strong><p>Tasks and notes sync only after sign-in and successful database setup.</p></div><span class="setting-value warning-value" id="cloudBadge">Sign in required</span></div>
 <div class="setting-row"><div><strong>Email, calendar & messaging</strong><p>Not connected. These require official provider authorization and separate permission reviews.</p></div><span class="setting-value warning-value">Not connected</span></div>
 <div class="setting-row"><div><strong>Subscriptions & payments</strong><p>Plans are not purchasable yet. Billing needs a verified payment provider and server-side payment checks.</p></div><span class="setting-value warning-value">Not active</span></div>
-<div class="setting-row"><div><strong>Owner Console</strong><p>Admin controls remain disabled until owner-only server authorization is built and tested.</p></div><span class="setting-value warning-value">Not enabled</span></div>
-<div class="setting-row"><div><strong>Clear local workspace</strong><p>Remove tasks and notes saved in this browser. This cannot be undone.</p></div><button class="danger-button" id="clearData">Clear local data</button></div>
+<div class="setting-row"><div><strong>Owner Console</strong><p>A read-only overview appears only after the server verifies your owner role and the admin function is deployed.</p></div><span class="setting-value warning-value">Owner verification required</span></div>
+<div class="setting-row"><div><strong>Clear workspace data</strong><p>Remove all tasks and notes from this browser and, when signed in, your cloud account. This cannot be undone.</p></div><button class="danger-button" id="clearData">Clear workspace</button></div>
 <p class="settings-footnote">ULTRON preview 0.2 · No email, WhatsApp, calendar, payment or external account is connected. Integrations will require your permission and confirmation for actions such as sending messages.</p></section>
 
 <section class="view" id="view-integrations"><div class="page-intro"><div class="eyebrow">CONNECTED WORKSPACE</div><h1>Apps & <span>Integrations</span></h1><p class="subheading">Connect only the services you choose. ULTRON will ask for permission before accessing or changing anything.</p></div>
