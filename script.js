@@ -146,7 +146,7 @@ $('#clearData').addEventListener('click',async()=>{
   ]);
   if(taskResult.error||noteResult.error){toast('Could not clear cloud data. Nothing was cleared locally.');return}
  }
- tasks=[];notes=[];store.set('tasks',tasks);store.set('notes',notes);renderTasks();renderNotes();renderStats();toast('Workspace data cleared');
+ tasks=[];notes=[];store.set('tasks',tasks);store.set('notes',notes);localStorage.removeItem('ultron_local_backup');renderTasks();renderNotes();renderStats();toast('Workspace data cleared');
 });
 renderTasks();renderNotes();renderStats();
 async function loadOwnerConsole(){
