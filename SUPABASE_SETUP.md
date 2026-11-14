@@ -1,18 +1,18 @@
 # ULTRON — Supabase setup
 
-The current feature branch adds Supabase email magic-link sign-in, per-user task/note cloud sync, and an authenticated AI Edge Function caller. These features are **not live** until the pull requests are reviewed and merged, the database migrations are applied, Auth redirect settings are configured, and the Edge Function is deployed.
+These instructions are for the account owner. The repository contains the code, but these steps are required before the website can use cloud accounts, live AI, or the Owner Console.
 
 ## 1. Apply the database migrations
 
-Use the Supabase SQL Editor in this order:
+In the Supabase SQL Editor, run these files in this order:
 
-1. Open `supabase/migrations/20261114000000_initial_schema.sql`, copy the full SQL, and run it.
-2. Open `supabase/migrations/20261115000000_ai_rate_limit.sql`, copy the full SQL, and run it.
-3. Confirm that `tasks`, `notes`, `ultron_ai_usage`, and `ultron_user_roles` exist in Table Editor.
+1. `supabase/migrations/20261114000000_initial_schema.sql` — private tasks and notes tables with Row Level Security.
+2. `supabase/migrations/20261115000000_ai_rate_limit.sql` — per-user AI request quota.
+3. `supabase/migrations/20261116000000_owner_roles.sql` — server-managed owner roles.
 
-Do not run the initial schema twice using both `schema.sql` and the migration. They create the same tasks/notes foundation. The second migration adds the private AI quota table and function. The third migration adds server-managed owner roles.
+Do not run both `schema.sql` and the first migration; they create the same tasks/notes foundation. Confirm that `tasks`, `notes`, `ultron_ai_usage`, and `ultron_user_roles` exist.
 
-3. Open `supabase/migrations/20261116000000_owner_roles.sql` and run it.\n\n## Assign the owner role\n\nAfter the owner has signed in once, find that account's user UUID in Supabase Authentication → Users. In the SQL Editor, run the commented `INSERT` example at the bottom of `20261116000000_owner_roles.sql`, replacing `AUTH_USER_UUID` with the verified UUID. Do not send the UUID or any secret to chat. The website never lets a browser user grant themselves owner access.\n\n## 2. Configure email sign-in
+## 2. Configure email sign-in
 
 In Supabase Authentication settings:
 
@@ -21,34 +21,54 @@ In Supabase Authentication settings:
 3. Add `https://ahmadzshan999-hub.github.io/ULTRON/` to allowed redirect URLs.
 4. Test the magic-link flow with an account you control.
 
-The website asks Supabase to send a sign-in link; it does not collect or store a password.
+The website sends a sign-in link. It does not collect or store a Supabase password.
 
 ## 3. Cloud data and privacy
 
 - Tasks and notes are stored per signed-in user.
-- Row Level Security policies restrict records to the authenticated user's `auth.uid()`.
-- On sign-in, the cloud workspace loads. Before sending the sign-in link, the website preserves local browser data so the user can explicitly import it afterward.
-- The import button merges local records into the cloud account; it does not delete unrelated cloud rows.
-- Test with two separate test accounts before storing real information.
+- RLS policies restrict records to the authenticated user's `auth.uid()`.
+- Before sign-in, the website saves a local backup. After sign-in, use the explicit import button to merge that backup into the cloud account.
+- Test with two separate accounts to confirm that neither can read or change the other's records.
 
-A publishable key is public-client configuration and may appear in browser code. RLS must remain enabled. **Never put a Secret/service-role key, database password, or provider key in HTML, JavaScript, GitHub, or chat.**
+A publishable key is public-client configuration. RLS must remain enabled. Never put a Secret/service-role key, database password, or provider key in HTML, JavaScript, GitHub, or chat.
 
-## 4. Configure and deploy the AI function
+## 4. Configure and deploy live AI
 
-The Edge Function is named `ultron-chat`. In Supabase Function Secrets, the account owner must set:
+In Supabase Function Secrets, set:
 
 - `OPENAI_API_KEY` — private provider API key.
-- `OPENAI_MODEL` — a model identifier enabled for that provider account.
+- `OPENAI_MODEL` — a model identifier enabled for the provider account.
+- `SUPABASE_PUBLISHABLE_KEYS` — JSON containing the project's publishable key under the `default` property, as expected by the AI function.
 
-Then deploy the function using the current Supabase CLI or Dashboard instructions. Keep JWT verification enabled. Test a signed-in chat request and confirm that unauthenticated requests are rejected.
+Deploy `supabase/functions/ultron-chat` with JWT verification enabled. The function enforces a fixed starter limit of 30 requests per user per rolling hour. Also configure provider spending limits and monitoring.
 
-The AI endpoint enforces a fixed starter quota of 30 requests per user per rolling hour. This is not a full billing or abuse-prevention system; configure provider spending limits and monitoring too.
+## 5. Activate the Owner Console
 
-## 5. Not included yet
+The Owner Console is read-only and hidden until the server verifies the signed-in account's owner role.
 
-- Gmail, WhatsApp, and calendar integrations (each needs official OAuth/API setup and user permission).
-- Gmail, WhatsApp Business and calendar connections (official provider setup and permissions required).\n- Payment checkout and subscription entitlements (adult account owner must configure and verify a provider).\n- Background wake-word listening; browser wake-word preview needs the page open and visible.
-- Subscription checkout, payment webhooks, and subscription entitlements.
-- Background wake-word listening; browser wake-word preview needs the page open and visible.
+1. After the intended owner signs in once, open Supabase Authentication → Users and copy that account's user UUID locally.
+2. In the Supabase SQL Editor, run the following statement, replacing the placeholder with the verified UUID:
 
-Provider billing and account setup should be handled by a parent/guardian where required. Do not share provider credentials in chat.
+```sql
+insert into public.ultron_user_roles (user_id, role)
+values ('AUTH_USER_UUID', 'owner')
+on conflict (user_id) do update set role = excluded.role;
+```
+
+3. In Supabase Function Secrets, set `SUPABASE_PUBLISHABLE_KEY` to the project's publishable key and `SUPABASE_SERVICE_ROLE_KEY` to the private service-role key.
+4. Deploy `supabase/functions/ultron-admin` with JWT verification enabled.
+5. Sign in as the owner and open Owner Console. Confirm that a non-owner account receives no access.
+
+The service-role key is used only inside the server function after the user's owner role is verified. Never put it in frontend files, GitHub, or chat. Do not share the UUID or secret with ChatGPT.
+
+## 6. Integrations and subscriptions
+
+- Gmail and Google Calendar need a Google Cloud project, OAuth consent configuration, redirect URLs, and protected server-side credentials.
+- WhatsApp requires the official WhatsApp Business Platform / Cloud API and an eligible business account; it does not provide a general personal WhatsApp inbox connection.
+- Subscription checkout remains disabled until an adult account owner selects and verifies a payment provider. Payment webhooks and entitlements must be checked server-side.
+
+No external account is connected and no payment is being collected by this preview. Do not enter card details or external account passwords into ULTRON chat.
+
+## 7. Voice limitations
+
+Browser wake-word listening requires a supported browser, microphone permission, and the ULTRON tab open and visible. A web page cannot listen for a wake word after the browser is closed. A native app or supported operating-system integration would be needed for that.
