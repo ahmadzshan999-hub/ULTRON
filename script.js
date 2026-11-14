@@ -154,21 +154,41 @@ async function loadOwnerConsole(){
  if(!currentUser||!supabaseClient)return;
  $('#ownerStatus').textContent='Checking server-side owner permissions…';
  try{
-  const {data,error}=await supabaseClient.functions.invoke('ultron-admin');
+  const {data,error}=await supabaseClient.functions.invoke('ultron-admin',{body:{action:'overview'}});
   if(error)throw error;
   if(data?.role!=='owner')throw new Error('Owner role required');
   $('#ownerNav').hidden=false;
   $('#ownerTasks').textContent=String(data.metrics?.tasks??'—');
-  $('#ownerNotes').textContent=String(data.metrics?.notes??'—');
+  $('#ownerNotes').textContent=String(data.metrics?.notes??'—');$('#ownerGrants').textContent=String(data.metrics?.activeGrants??'—');
   $('#ownerStatus').textContent='Owner access verified · read-only overview';
  }catch(error){
   $('#ownerNav').hidden=true;
   $('#ownerStatus').textContent='Owner access is not assigned or the admin service is not deployed.';
-  $('#ownerTasks').textContent='—';$('#ownerNotes').textContent='—';
+  $('#ownerTasks').textContent='—';$('#ownerNotes').textContent='—';$('#ownerGrants').textContent='—';
   if($('#view-owner').classList.contains('active-view'))navigate('settings');
  }
 }
 $('#refreshOwner').addEventListener('click',loadOwnerConsole);
+
+async function ownerPlanAction(action){
+ const email=$('#grantEmail').value.trim();
+ if(!email){$('#ownerActionStatus').textContent='Enter the account email first.';return}
+ const prompt=action==='grant'?'Grant the selected complimentary plan to '+email+'? No payment will be collected.':'Revoke the complimentary plan for '+email+' and return the account to Free?';
+ if(!confirm(prompt))return;
+ const button=action==='grant'?$('#grantPlanButton'):$('#revokePlanButton');
+ button.disabled=true;$('#ownerActionStatus').textContent='Checking owner permissions and updating the account…';
+ try{
+  const body={action,email};if(action==='grant'){body.plan=$('#grantPlan').value;body.duration=$('#grantDuration').value}
+  const {data,error}=await supabaseClient.functions.invoke('ultron-admin',{body});
+  if(error)throw error;
+  $('#ownerActionStatus').textContent=data.message+(data.expires_at?' Expires: '+new Date(data.expires_at).toLocaleDateString():' No expiry.');
+  await loadOwnerConsole();
+ }catch(error){$('#ownerActionStatus').textContent=error?.message||'Owner action failed. Check the function deployment and migrations.'}
+ finally{button.disabled=false}
+}
+$('#grantPlanForm').addEventListener('submit',event=>{event.preventDefault();ownerPlanAction('grant')});
+$('#revokePlanButton').addEventListener('click',()=>ownerPlanAction('revoke'));
+
 
 async function refreshAccount(){
  if(!supabaseClient){$('#accountState').textContent='Not configured';$('#authMessage').textContent='Supabase configuration is missing.';return}
