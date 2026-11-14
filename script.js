@@ -60,7 +60,7 @@ function runAppCommand(input){
  if(createNote){notes.unshift({id:crypto.randomUUID(),title:createNote[1].trim().slice(0,90),content:createNote[2].trim().slice(0,5000),created:new Date().toISOString()});saveNotes();return "Saved your note, “"+createNote[1].trim()+"”."}
  const completeTask=text.match(/^(?:complete|finish|mark done|mark complete)\s+(?:the\s+)?task\s+(.+)$/i);
  if(completeTask){const target=completeTask[1].toLowerCase().trim(),task=tasks.find(t=>!t.done&&t.text.toLowerCase()===target)||tasks.find(t=>!t.done&&t.text.toLowerCase().includes(target));if(!task)return "I couldn't find an open task matching “"+completeTask[1]+"”.";task.done=true;saveTasks();return "Marked “"+task.text+"” as complete."}
- if(/^(?:turn on|enable) dark mode$/.test(s)){if(!document.body.classList.contains('light-mode'))toggleTheme();return "Dark mode is on."}
+ if(/^(?:turn on|enable) dark mode$/.test(s)){if(document.body.classList.contains('light-mode'))toggleTheme();return "Dark mode is on."}
  if(/^(?:turn on|enable) light mode$/.test(s)){if(document.body.classList.contains('light-mode')===false)toggleTheme();return "Light mode is on."}
  if(/^(?:stop|be quiet|stop talking|silence)$/.test(s)){if('speechSynthesis'in window)window.speechSynthesis.cancel();return "Okay. Voice output stopped."}
  if(/^(?:what can you do|help|commands)$/.test(s))return "I can open Gallery, Tasks, Notes, AI Chat, Voice Room, Settings, Integrations and Plans. You can say “add task finish homework”, “show my tasks”, or “open YouTube”.";
