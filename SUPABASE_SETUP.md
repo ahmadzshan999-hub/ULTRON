@@ -10,7 +10,7 @@ In the Supabase SQL Editor, run these files in this order:
 2. `supabase/migrations/20261115000000_ai_rate_limit.sql` — per-user AI request quota.
 3. `supabase/migrations/20261116000000_owner_roles.sql` — server-managed owner roles.
 4. `supabase/migrations/20261117000000_complimentary_entitlements.sql` — private complimentary plan entitlements.
-5. `supabase/migrations/20261118000000_tier_ai_limits.sql` — enforce AI request limits for each plan.
+5. `supabase/migrations/20261118000000_tier_ai_limits.sql` — enforce AI request limits for each plan.\n6. `supabase/migrations/20261119000000_owner_audit.sql` — private audit log for owner plan changes.
 
 Do not run both `schema.sql` and the first migration; they create the same tasks/notes foundation. Confirm that `tasks`, `notes`, `ultron_ai_usage`, and `ultron_user_roles`, and `ultron_entitlements` exist.
 
@@ -46,7 +46,7 @@ Deploy `supabase/functions/ultron-chat` with JWT verification enabled. The funct
 
 ## 5. Activate the Owner Console
 
-The Owner Console is read-only and hidden until the server verifies the signed-in account's owner role.
+The Owner Console is hidden until the server verifies the signed-in account's owner role. It includes aggregate metrics, configuration diagnostics, and a private audit log of complimentary plan changes; it does not expose private task or note content.
 
 1. After the intended owner signs in once, open Supabase Authentication → Users and copy that account's user UUID locally.
 2. In the Supabase SQL Editor, run the following statement, replacing the placeholder with the verified UUID:
@@ -68,7 +68,7 @@ The service-role key is used only inside the server function after the user's ow
 
 The Owner Console can grant Plus or Pro at no charge to an existing ULTRON account. The recipient must sign up and verify their email first. Enter that exact email in Owner Console, choose a plan and choose 30 days, 90 days, one year, or no expiry. The owner can revoke the grant by email. No payment is taken. Apply migration 20261117000000_complimentary_entitlements.sql and redeploy ultron-admin before using these controls. Entitlements are recorded securely, but Plus/Pro feature limits still need to be enforced in product services before those tiers are treated as fully active.
 
-## 7. Integrations and subscriptions
+## 7. Owner Mission Control\n\nThe Owner Console's system diagnostics check whether the core tables exist and whether the AI provider secret and model configuration are present. A configured status is not a guarantee that the external AI provider is currently reachable. The activity log records complimentary plan grants and revocations with a masked email hint, action, plan, duration, and timestamp. The audit table is private and is accessed only by the owner-verified server function.\n\n## 8. Integrations and subscriptions
 
 - Gmail and Google Calendar need a Google Cloud project, OAuth consent configuration, redirect URLs, and protected server-side credentials.
 - WhatsApp requires the official WhatsApp Business Platform / Cloud API and an eligible business account; it does not provide a general personal WhatsApp inbox connection.
@@ -76,6 +76,6 @@ The Owner Console can grant Plus or Pro at no charge to an existing ULTRON accou
 
 No external account is connected and no payment is being collected by this preview. Do not enter card details or external account passwords into ULTRON chat.
 
-## 8. Voice limitations
+## 9. Voice limitations
 
-Browser wake-word listening requires a supported browser, microphone permission, and the ULTRON tab open and visible. A web page cannot listen for a wake word after the browser is closed. A native app or supported operating-system integration would be needed for that.
+Open the Voice Room from the sidebar for the dedicated microphone interface. Browser speech recognition and spoken replies require a supported browser, microphone permission, and the ULTRON tab open and visible. A web page cannot listen for a wake word after the browser is closed. A native app or supported operating-system integration would be needed for that.
