@@ -104,10 +104,7 @@ Deno.serve(async (req: Request) => {
   }
 
   // Enforce a per-user server-side quota before spending provider credits.
-  const { data: allowed, error: quotaError } = await supabase.rpc("consume_ultron_ai_quota", {
-    p_limit: 30,
-    p_window_seconds: 3600,
-  });
+  const { data: allowed, error: quotaError } = await supabase.rpc("consume_ultron_ai_quota");
   if (quotaError) {
     console.error("ULTRON quota check failed:", quotaError.message);
     return json({ error: "ULTRON is temporarily unavailable. Please try again later." }, 503, headers);
