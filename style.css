@@ -9,3 +9,16 @@ body.light-mode{--bg:#f2f6f5;--panel:#fff;--line:rgba(40,68,69,.13);--text:#1c30
 .voice-copy{min-width:0;flex:1}.voice-copy strong,.voice-copy small{display:block}.voice-copy strong{font-size:11px}.voice-copy small{font-size:9px;color:#82979c;line-height:1.5;margin-top:4px}
 .voice-controls{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.voice-controls .secondary-button{cursor:pointer}
 @media(max-width:620px){.voice-console{align-items:flex-start;flex-wrap:wrap}.voice-copy{padding-top:3px}.voice-controls{width:100%;justify-content:flex-start;margin-left:56px}}
+
+.account-panel{padding:20px;margin-bottom:16px;background:var(--panel);border:1px solid var(--line);border-radius:13px}
+.account-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.account-heading h2{font:600 18px "Space Grotesk";margin:5px 0}
+.account-heading p,.account-form small{font-size:10px;color:#87999e;line-height:1.6}
+.account-state{font-size:9px;color:var(--mint);border:1px solid var(--line);padding:7px 10px;border-radius:20px;white-space:nowrap}
+.account-form{margin-top:16px}.account-form label{display:block;font-size:9px;letter-spacing:1px;color:#91a3a7;margin-bottom:7px}
+.account-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.account-controls input{min-width:200px;flex:1;padding:11px 12px;background:#111d24;border:1px solid var(--line);border-radius:8px;color:var(--text);font:11px "DM Sans"}
+.account-form small{display:block;margin-top:8px}.signed-in-panel{margin-top:16px}
+.signed-in-panel span{font-size:11px;color:var(--mint);margin-right:auto}.account-controls button{cursor:pointer}
+body.light-mode .account-panel{background:#fff}body.light-mode .account-controls input{background:#f6faf8;color:#1c3032}
+@media(max-width:620px){.account-heading{flex-direction:column}.account-controls{align-items:stretch}.account-controls .primary-button,.account-controls .secondary-button,.account-controls .danger-button{width:100%}}

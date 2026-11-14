@@ -103,6 +103,16 @@ Deno.serve(async (req: Request) => {
     history.push({ role: item.role, content: item.content });
   }
 
+  // Enforce a per-user server-side quota before spending provider credits.
+  const { data: allowed, error: quotaError } = await supabase.rpc("consume_ultron_ai_quota");
+  if (quotaError) {
+    console.error("ULTRON quota check failed:", quotaError.message);
+    return json({ error: "ULTRON is temporarily unavailable. Please try again later." }, 503, headers);
+  }
+  if (allowed !== true) {
+    return json({ error: "You've reached the ULTRON AI hourly limit. Please try again later." }, 429, headers);
+  }
+
   try {
     const providerResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",

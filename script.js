@@ -1,6 +1,10 @@
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const store={get(k,f){try{return JSON.parse(localStorage.getItem('ultron_'+k))??f}catch{return f}},set(k,v){try{localStorage.setItem('ultron_'+k,JSON.stringify(v))}catch{toast('Browser storage is full or unavailable')}}};
 let tasks=store.get('tasks',[]),notes=store.get('notes',[]),filter='all',toastTimer;
+const supabaseClient = window.supabase?.createClient && window.ULTRON_CONFIG?.url && window.ULTRON_CONFIG?.publishableKey
+  ? window.supabase.createClient(window.ULTRON_CONFIG.url,window.ULTRON_CONFIG.publishableKey)
+  : null;
+let currentUser=null,chatHistory=[],cloudReady=false;
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2300)}
 function navigate(v){$$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Assistant',tasks:'Tasks',notes:'Notes',settings:'Settings'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();window.scrollTo({top:0,behavior:'smooth'})}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));$$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
@@ -8,16 +12,25 @@ $('#newChat').addEventListener('click',()=>{navigate('assistant');$('#chatMessag
 $('#todayDate').textContent=new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(new Date());
 function renderStats(){const done=tasks.filter(t=>t.done).length,open=tasks.length-done;$('#completedStat').textContent=done;$('#openStat').textContent=open;$('#notesStat').textContent=notes.length;$('#taskCount').textContent=open;$('#noteCount').textContent=notes.length;$('#noteCountLabel').textContent=notes.length+' note'+(notes.length===1?'':'s')}
 function renderTasks(){const list=$('#taskList'),shown=tasks.filter(t=>filter==='all'||(filter==='done'?t.done:!t.done));$('#taskSummary').textContent=tasks.length?tasks.length+' total · '+tasks.filter(t=>t.done).length+' completed':'No tasks yet';if(!shown.length){list.innerHTML='<div class="empty-state"><span>✓</span><strong>'+(tasks.length?'Nothing in this filter':'Nothing on your list yet')+'</strong><p>'+(tasks.length?'Try another filter.':'Add a task above to get started.')+'</p></div>';return}list.innerHTML=shown.map(t=>'<div class="task-item '+(t.done?'done':'')+'" data-id="'+t.id+'"><input class="task-check" type="checkbox" '+(t.done?'checked':'')+' aria-label="Complete task"><span class="task-title"></span><button class="delete-task" aria-label="Delete task">×</button></div>').join('');$$('.task-item',list).forEach(row=>{const t=tasks.find(x=>x.id===row.dataset.id);$('.task-title',row).textContent=t.text;$('.task-check',row).addEventListener('change',e=>{t.done=e.target.checked;saveTasks()});$('.delete-task',row).addEventListener('click',()=>{tasks=tasks.filter(x=>x.id!==t.id);saveTasks();toast('Task deleted')})})}
-function saveTasks(){store.set('tasks',tasks);renderTasks();renderStats()}
+async function syncRows(table,rows){
+ if(!supabaseClient||!currentUser)return;
+ const {data:existing,error:readError}=await supabaseClient.from(table).select('id');
+ if(readError)throw readError;
+ const keep=new Set(rows.map(row=>row.id));
+ const remove=(existing||[]).map(row=>row.id).filter(id=>!keep.has(id));
+ if(remove.length){const {error}=await supabaseClient.from(table).delete().in('id',remove);if(error)throw error;}
+ if(rows.length){const payload=rows.map(row=>({...row,user_id:currentUser.id}));const {error}=await supabaseClient.from(table).upsert(payload);if(error)throw error;}
+}
+function saveTasks(){store.set('tasks',tasks);renderTasks();renderStats();if(currentUser)syncRows('tasks',tasks.map(t=>({id:t.id,text:t.text,done:!!t.done,created_at:t.created||new Date().toISOString()}))).catch(e=>{console.error(e);toast('Cloud task sync failed.')})}
 $('#taskForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#taskInput'),v=i.value.trim();if(!v)return;tasks.unshift({id:crypto.randomUUID(),text:v,done:false});i.value='';saveTasks();toast('Task added')});
 $$('.filter').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;$$('.filter').forEach(x=>x.classList.toggle('active',x===b));renderTasks()}));
 function renderNotes(){const list=$('#notesList');if(!notes.length){list.innerHTML='<div class="empty-state"><span>▤</span><strong>Your notes will appear here</strong><p>Write something worth remembering.</p></div>';return}list.innerHTML=notes.map(n=>'<article class="note-card" data-id="'+n.id+'"><button class="delete-note" aria-label="Delete note">×</button><strong class="note-title"></strong><p class="note-content"></p><small>'+new Date(n.created).toLocaleString()+'</small></article>').join('');$$('.note-card',list).forEach(c=>{const n=notes.find(x=>x.id===c.dataset.id);$('.note-title',c).textContent=n.title;$('.note-content',c).textContent=n.content;$('.delete-note',c).addEventListener('click',()=>{notes=notes.filter(x=>x.id!==n.id);saveNotes();toast('Note deleted')})})}
-function saveNotes(){store.set('notes',notes);renderNotes();renderStats()}
+function saveNotes(){store.set('notes',notes);renderNotes();renderStats();if(currentUser)syncRows('notes',notes.map(n=>({id:n.id,title:n.title,content:n.content,created_at:n.created||new Date().toISOString()}))).catch(e=>{console.error(e);toast('Cloud note sync failed.')})}
 $('#noteForm').addEventListener('submit',e=>{e.preventDefault();const title=$('#noteTitle').value.trim(),content=$('#noteContent').value.trim();if(!title||!content)return;notes.unshift({id:crypto.randomUUID(),title,content,created:new Date().toISOString()});e.target.reset();saveNotes();toast('Note saved')});
 function addMessage(who,text){const row=document.createElement('div');row.className='message '+(who==='user'?'user-message':'assistant-message');if(who==='assistant'){const a=document.createElement('div');a.className='message-avatar';a.textContent='✳';row.append(a)}const body=document.createElement('div'),name=document.createElement('strong'),p=document.createElement('p');body.className='message-body';name.textContent=who==='user'?'YOU':'ULTRON';p.textContent=text;body.append(name,p);row.append(body);$('#chatMessages').append(row);$('#chatMessages').scrollTop=$('#chatMessages').scrollHeight}
 function localReply(input){const s=input.toLowerCase();if(/hello|hi|hey|yo/.test(s))return"Hello. I'm ready to help you think things through. What are we working on?";if(/plan|day|schedule/.test(s))return"Let's make a simple plan:\n1. Pick your three most important tasks.\n2. Start with the task that matters most.\n3. Work in a focused block, then take a short break.\n4. Review what you completed.\n\nYou can save each step in Tasks.";if(/idea|project/.test(s))return"Start with three things: the problem you want to solve, who it helps, and the smallest useful version you can build. Save the idea in Notes, then turn the first action into a task.";if(/focus|concentrat/.test(s))return"Try a short focus cycle: choose one task, close unrelated tabs, work for 20 minutes, then take a 5-minute break. Make the next action small enough to start now.";if(/task|todo|work/.test(s))return"Let's make it actionable. Open Tasks and add one clear next step. If the goal feels too big, split it into smaller actions.";if(/note|remember|save/.test(s))return"You can keep that thought in Notes. Give it a short title and add the details you want to remember.";if(/who are you|what are you|ultron/.test(s))return"I'm ULTRON, your personal workspace preview. I can organise tasks and notes in this browser and provide basic demo replies. A live AI model and cloud account are not connected yet.";return"I can help structure that. Tell me the outcome you want, what you've tried, and the next decision you need to make. Note: this preview uses built-in demo responses, not a live AI model."}
 $('#chatForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#chatInput'),v=i.value.trim();if(!v)return;i.value='';processUserCommand(v,false)});
-$$('.suggestion').forEach(b=>b.addEventListener('click',()=>{$('#chatInput').value=b.textContent;$('#chatForm').requestSubmit()}));$('#clearChat').addEventListener('click',()=>{$('#chatMessages').innerHTML='';addMessage('assistant','Conversation cleared. What would you like to explore next?')});
+$$('.suggestion').forEach(b=>b.addEventListener('click',()=>{$('#chatInput').value=b.textContent;$('#chatForm').requestSubmit()}));$('#clearChat').addEventListener('click',()=>{chatHistory=[];$('#chatMessages').innerHTML='';addMessage('assistant','Conversation cleared. What would you like to explore next?')});
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 let manualRecognition=null,wakeRecognition=null,wakeEnabled=false,speechReplies=true,manualListening=false;
 function voiceStatus(m){$('#voiceStatus').textContent=m;$('#wakeStatus').textContent=m}
@@ -31,11 +44,26 @@ function speakText(text){
     window.speechSynthesis.speak(utterance);
   });
 }
-function processUserCommand(text,fromWake){
-  const clean=text.trim();if(!clean)return;
-  addMessage('user',clean);
-  const reply=localReply(clean);
-  setTimeout(()=>{addMessage('assistant',reply);speakText(reply).finally(()=>{if(wakeEnabled&&fromWake)setTimeout(startWakeListener,700)})},220);
+async function processUserCommand(text,fromWake){
+ const clean=text.trim();if(!clean)return;
+ addMessage('user',clean);chatHistory.push({role:'user',content:clean});
+ let reply='';
+ if(currentUser&&supabaseClient){
+  voiceStatus('Thinking…');
+  try{
+   const {data,error}=await supabaseClient.functions.invoke('ultron-chat',{body:{message:clean,history:chatHistory.slice(-11,-1)}});
+   if(error)throw error;
+   if(!data?.reply)throw new Error('No AI reply returned');
+   reply=data.reply;$('#aiBadge').textContent='Connected';$('#aiStatus').textContent='The protected AI endpoint returned a response successfully.';$('#assistantStatus').innerHTML='<i></i> AI connected · voice replies available';
+  }catch(error){console.error('ULTRON AI request failed',error);reply='I could not reach my AI service. The backend may not be deployed or configured yet.';$('#aiBadge').textContent='Unavailable';$('#assistantStatus').innerHTML='<i></i> AI backend unavailable · check setup'}
+ }else{
+  reply=localReply(clean);
+  if(!currentUser)reply+='\n\nSign in under Settings to use the connected AI service and private cloud workspace.';
+ }
+ chatHistory.push({role:'assistant',content:reply});chatHistory=chatHistory.slice(-12);
+ addMessage('assistant',reply);voiceStatus(currentUser?'AI response ready.':'Demo mode. Sign in to enable real AI.');
+ await speakText(reply);
+ if(wakeEnabled&&fromWake)setTimeout(startWakeListener,700);
 }
 function stopWakeRecognition(){
   if(wakeRecognition){try{wakeRecognition.onend=null;wakeRecognition.stop()}catch{}wakeRecognition=null}
@@ -110,3 +138,62 @@ function toggleTheme(){document.body.classList.toggle('light-mode');const light=
 $('#themeToggle').addEventListener('click',toggleTheme);$('#themeToggleAlt').addEventListener('click',toggleTheme);if(store.get('theme','dark')==='light')document.body.classList.add('light-mode');
 $('#clearData').addEventListener('click',()=>{if(!confirm('Clear all ULTRON tasks and notes saved in this browser? This cannot be undone.'))return;tasks=[];notes=[];saveTasks();saveNotes();toast('Local data cleared')});
 renderTasks();renderNotes();renderStats();
+async function refreshAccount(){
+ if(!supabaseClient){$('#accountState').textContent='Not configured';$('#authMessage').textContent='Supabase configuration is missing.';return}
+ const {data:{session}}=await supabaseClient.auth.getSession();
+ currentUser=session?.user||null;
+ $('#signedOutPanel').hidden=!!currentUser;$('#signedInPanel').hidden=!currentUser;
+ $('#accountState').textContent=currentUser?'Signed in':'Signed out';
+ $('#signedInEmail').textContent=currentUser?.email||'Signed in';
+ $('#connectionIndicator').innerHTML='<i></i> '+(currentUser?'CLOUD ACCOUNT':'LOCAL MODE');
+ $('#storageStatus').textContent=currentUser?'Tasks and notes sync to your private Supabase account.':'Tasks and notes are stored on this device until you sign in.';
+ $('#storageBadge').textContent=currentUser?'Cloud sync':'Local only';
+ $('#cloudBadge').textContent=currentUser?'Signed in':'Sign in required';
+ $('#aiStatus').textContent=currentUser?'AI requests use the protected server function when it is deployed and configured.':'Sign in and configure the server-side provider secret to enable real AI.';
+ $('#aiBadge').textContent=currentUser?'Backend setup required':'Setup required';$('#assistantStatus').innerHTML='<i></i> '+(currentUser?'Signed in · AI backend setup may still be required':'Demo mode · sign in to enable AI');
+ if(currentUser)await loadCloudData();
+}
+async function loadCloudData(){
+ try{
+  const [tr,nr]=await Promise.all([
+   supabaseClient.from('tasks').select('id,text,done,created_at').order('created_at',{ascending:false}),
+   supabaseClient.from('notes').select('id,title,content,created_at').order('created_at',{ascending:false})
+  ]);
+  if(tr.error)throw tr.error;if(nr.error)throw nr.error;
+  tasks=(tr.data||[]).map(t=>({id:t.id,text:t.text,done:t.done,created:t.created_at}));
+  notes=(nr.data||[]).map(n=>({id:n.id,title:n.title,content:n.content,created:n.created_at}));
+  cloudReady=true;store.set('tasks',tasks);store.set('notes',notes);renderTasks();renderNotes();renderStats();
+  $('#storageStatus').textContent='Your tasks and notes are loaded from your private Supabase account.';
+  $('#storageBadge').textContent='Cloud sync active';
+ }catch(error){cloudReady=false;console.error('Cloud load failed',error);$('#storageStatus').textContent='Cloud data could not load. The database migration may not be applied yet.';$('#storageBadge').textContent='Sync error';}
+}
+$('#sendSignInLink').addEventListener('click',async()=>{
+ const email=$('#accountEmail').value.trim();
+ if(!email){$('#authMessage').textContent='Enter your email address first.';return}
+ if(!supabaseClient){$('#authMessage').textContent='Supabase configuration is missing.';return}
+ store.set('local_backup',{tasks,notes});$('#sendSignInLink').disabled=true;$('#authMessage').textContent='Sending your secure sign-in link…';
+ const {error}=await supabaseClient.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
+ $('#sendSignInLink').disabled=false;
+ $('#authMessage').textContent=error?'Could not send the link: '+error.message:'Check your email for the ULTRON sign-in link. Open it in this browser to finish signing in.';
+});
+$('#signOut').addEventListener('click',async()=>{
+ if(!supabaseClient)return;
+ const {error}=await supabaseClient.auth.signOut();
+ if(error){toast('Sign out failed.');return}
+ currentUser=null;cloudReady=false;tasks=[];notes=[];store.set('tasks',[]);store.set('notes',[]);renderTasks();renderNotes();renderStats();await refreshAccount();toast('Signed out');
+});
+$('#importLocalData').addEventListener('click',async()=>{
+ if(!currentUser||!supabaseClient)return;
+ const backup=store.get('local_backup',{tasks:[],notes:[]});const localTasks=backup.tasks||[],localNotes=backup.notes||[];
+ if(!localTasks.length&&!localNotes.length){toast('There is no local data to import.');return}
+ if(!confirm('Import this browser’s saved tasks and notes into your signed-in ULTRON account?'))return;
+ try{
+  const taskRows=localTasks.map(t=>({id:t.id,text:t.text,done:!!t.done,created_at:t.created||new Date().toISOString(),user_id:currentUser.id}));
+  const noteRows=localNotes.map(n=>({id:n.id,title:n.title,content:n.content,created_at:n.created||new Date().toISOString(),user_id:currentUser.id}));
+  if(taskRows.length){const {error}=await supabaseClient.from('tasks').upsert(taskRows);if(error)throw error;}
+  if(noteRows.length){const {error}=await supabaseClient.from('notes').upsert(noteRows);if(error)throw error;}
+  await loadCloudData();localStorage.removeItem('ultron_local_backup');toast('Local data imported.');
+ }catch(error){console.error(error);toast('Import failed. Check database setup and permissions.')}
+});
+if(supabaseClient)supabaseClient.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;setTimeout(()=>refreshAccount(),0)});
+refreshAccount();
