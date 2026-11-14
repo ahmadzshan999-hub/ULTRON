@@ -88,7 +88,7 @@ body.light-mode .membership-status{background:#f4faf7}
 .voice-personality-controls{display:flex;align-items:center;justify-content:center;gap:11px;flex-wrap:wrap;margin:18px auto 0;padding:12px 14px;max-width:700px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025)}
 .voice-personality-controls label{font-size:9px;color:#94a8ad;letter-spacing:.6px}.voice-personality-controls select{max-width:260px;min-width:170px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#111e27;color:var(--text);font-size:10px}
 .voice-personality-controls input[type=range]{width:90px;accent-color:var(--mint)}.voice-personality-controls span{font-size:9px;color:var(--mint)}
-.voice-orb{transition:transform .35s ease,box-shadow .35s ease}.voice-active .voice-room-orb,.ultron-speaking .voice-room-orb{transform:scale(1.06);box-shadow:0 0 22px rgba(119,226,195,.35),0 0 95px rgba(119,226,195,.2)}
+.voice-orb{transition:transform .35s ease,box-shadow .35s ease}.voice-room-orb.voice-active,.ultron-speaking .voice-room-orb{transform:scale(1.06);box-shadow:0 0 22px rgba(119,226,195,.35),0 0 95px rgba(119,226,195,.2)}
 .ultron-speaking .voice-room-rings{animation:voicePulse 1.5s ease-in-out infinite alternate}
 @keyframes voicePulse{from{transform:scale(.94);opacity:.5}to{transform:scale(1.07);opacity:1}}
 .chat-panel{overflow:hidden;border:1px solid rgba(119,226,195,.16);border-radius:17px;background:linear-gradient(155deg,rgba(20,34,43,.96),rgba(10,18,26,.98));box-shadow:0 24px 70px rgba(0,0,0,.2)}
