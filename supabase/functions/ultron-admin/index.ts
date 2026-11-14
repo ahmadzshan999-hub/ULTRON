@@ -34,15 +34,43 @@ Deno.serve(async (req: Request) => {
   let body: { action?: string; email?: string; plan?: string; duration?: string };
   try { body = await req.json(); } catch { return json({ error: "Request body must be valid JSON." }, 400, headers); }
   const action = body.action ?? "overview";
+  const emailHint = (value: string) => {
+    const [local, domain] = value.split("@");
+    return (local.slice(0, 1) || "*") + "***@" + domain;
+  };
+
+  if (action === "diagnostics") {
+    const [tasksCheck, notesCheck, entitlementsCheck, auditCheck] = await Promise.all([
+      admin.from("tasks").select("id", { count: "exact", head: true }),
+      admin.from("notes").select("id", { count: "exact", head: true }),
+      admin.from("ultron_entitlements").select("user_id", { count: "exact", head: true }),
+      admin.from("ultron_owner_audit").select("id", { count: "exact", head: true }),
+    ]);
+    const databaseOk = !tasksCheck.error && !notesCheck.error && !entitlementsCheck.error && !auditCheck.error;
+    const aiConfigured = Boolean(Deno.env.get("OPENAI_API_KEY") && Deno.env.get("OPENAI_MODEL"));
+    return json({
+      role: "owner",
+      diagnostics: {
+        database: databaseOk ? "ready" : "needs_setup",
+        ai: aiConfigured ? "configured" : "needs_setup",
+        ownerSecurity: "verified",
+        checked_at: new Date().toISOString(),
+      },
+      message: databaseOk
+        ? (aiConfigured ? "Core database and AI configuration are present." : "Database is ready. AI provider secrets still need configuration.")
+        : "One or more database migrations are missing or unavailable.",
+    }, 200, headers);
+  }
 
   if (action === "overview") {
-    const [tasks, notes, grants] = await Promise.all([
+    const [tasks, notes, grants, activity] = await Promise.all([
       admin.from("tasks").select("id", { count: "exact", head: true }),
       admin.from("notes").select("id", { count: "exact", head: true }),
       admin.from("ultron_entitlements").select("user_id", { count: "exact", head: true }).eq("status", "active").or("expires_at.is.null,expires_at.gt." + new Date().toISOString()),
+      admin.from("ultron_owner_audit").select("action,plan,target_email_hint,duration,created_at").order("created_at", { ascending: false }).limit(8),
     ]);
-    if (tasks.error || notes.error || grants.error) return json({ error: "Could not load owner overview. Check that all migrations have been applied." }, 503, headers);
-    return json({ role: "owner", metrics: { tasks: tasks.count ?? 0, notes: notes.count ?? 0, activeGrants: grants.count ?? 0 }, checked_at: new Date().toISOString() }, 200, headers);
+    if (tasks.error || notes.error || grants.error || activity.error) return json({ error: "Could not load owner overview. Check that all migrations have been applied." }, 503, headers);
+    return json({ role: "owner", metrics: { tasks: tasks.count ?? 0, notes: notes.count ?? 0, activeGrants: grants.count ?? 0 }, recentActivity: activity.data ?? [], checked_at: new Date().toISOString() }, 200, headers);
   }
 
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -67,7 +95,11 @@ Deno.serve(async (req: Request) => {
       expires_at: expiry, granted_by: user.id, updated_at: now.toISOString(),
     }, { onConflict: "user_id" });
     if (error) return json({ error: "Could not save the grant. Check that the entitlement migration has been applied." }, 503, headers);
-    return json({ ok: true, email: target.email, plan: body.plan, expires_at: expiry, message: body.plan.toUpperCase() + " access granted at no charge." }, 200, headers);
+    const audit = await admin.from("ultron_owner_audit").insert({
+      actor_id: user.id, action: "grant", plan: body.plan,
+      target_email_hint: emailHint(email), duration: body.duration,
+    });
+    return json({ ok: true, audit_logged: !audit.error, email: target.email, plan: body.plan, expires_at: expiry, message: body.plan.toUpperCase() + " access granted at no charge." }, 200, headers);
   }
   if (action === "revoke") {
     const now = new Date().toISOString();
@@ -76,7 +108,11 @@ Deno.serve(async (req: Request) => {
     }).eq("user_id", target.id).select("user_id").maybeSingle();
     if (error) return json({ error: "Could not revoke the plan." }, 503, headers);
     if (!revoked) return json({ error: "That account has no complimentary upgrade to revoke." }, 404, headers);
-    return json({ ok: true, email: target.email, message: "Complimentary paid-plan access revoked." }, 200, headers);
+    const audit = await admin.from("ultron_owner_audit").insert({
+      actor_id: user.id, action: "revoke", plan: "free",
+      target_email_hint: emailHint(email), duration: null,
+    });
+    return json({ ok: true, audit_logged: !audit.error, email: target.email, message: "Complimentary paid-plan access revoked." }, 200, headers);
   }
   return json({ error: "Unknown owner action." }, 400, headers);
 });
