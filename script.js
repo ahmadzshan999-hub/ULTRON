@@ -6,10 +6,11 @@ const supabaseClient = window.supabase?.createClient && window.ULTRON_CONFIG?.ur
   : null;
 let currentUser=null,chatHistory=[],cloudReady=false;
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2300)}
-function navigate(v){if(v==='owner'&&$('#ownerNav').hidden){v='settings';toast('Owner access is restricted.')}if(v!=='voice'&&typeof wakeEnabled!=='undefined'&&wakeEnabled){wakeEnabled=false;stopWakeRecognition();$('#wakeToggle').textContent='Enable wake word';$('#voiceOrb').classList.remove('voice-active')}if(v!=='voice'&&typeof manualListening!=='undefined'&&manualListening){try{manualRecognition.stop()}catch{}}$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Chat',tasks:'Tasks',notes:'Notes',settings:'Settings',integrations:'Integrations',plans:'Plans',owner:'Owner Console',voice:'Voice Room'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();if(v==='voice')$('#voiceButton').focus();window.scrollTo({top:0,behavior:'smooth'})}
+function navigate(v){if(v==='owner'&&$('#ownerNav').hidden){v='settings';toast('Owner access is restricted.')}if(v!=='voice'&&typeof wakeEnabled!=='undefined'&&wakeEnabled){wakeEnabled=false;stopWakeRecognition();$('#wakeToggle').textContent='Enable wake word';$('#voiceOrb').classList.remove('voice-active')}if(v!=='voice'&&typeof manualListening!=='undefined'&&manualListening){try{manualRecognition.stop()}catch{}}$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Chat',tasks:'Tasks',notes:'Notes',settings:'Settings',integrations:'Integrations',plans:'Plans',owner:'Owner Console',voice:'Voice Room',gallery:'Gallery'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();if(v==='voice')$('#voiceButton').focus();window.scrollTo({top:0,behavior:'smooth'})}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));$$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
 $('#newChat').addEventListener('click',()=>{chatHistory=[];navigate('assistant');$('#chatMessages').innerHTML='';$('#voiceTranscript').innerHTML='<p class="voice-transcript-empty">Your spoken conversations will appear here.</p>';addMessage('assistant',"New conversation started. What's on your mind?")});
 $('#voiceButtonChat').addEventListener('click',()=>navigate('voice'));
+$('#chatInput').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();$('#chatForm').requestSubmit()}});
 $('#openChatFromVoice').addEventListener('click',()=>navigate('assistant'));$('#mobileMenu').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
 $('#todayDate').textContent=new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(new Date());
 function renderStats(){const done=tasks.filter(t=>t.done).length,open=tasks.length-done;$('#completedStat').textContent=done;$('#openStat').textContent=open;$('#notesStat').textContent=notes.length;$('#taskCount').textContent=open;$('#noteCount').textContent=notes.length;$('#noteCountLabel').textContent=notes.length+' note'+(notes.length===1?'':'s')}
@@ -30,27 +31,86 @@ function renderNotes(){const list=$('#notesList');if(!notes.length){list.innerHT
 function saveNotes(){store.set('notes',notes);renderNotes();renderStats();if(currentUser&&cloudReady)syncRows('notes',notes.map(n=>({id:n.id,title:n.title,content:n.content,created_at:n.created||new Date().toISOString()}))).catch(e=>{console.error(e);toast('Cloud note sync failed.')})}
 $('#noteForm').addEventListener('submit',e=>{e.preventDefault();const title=$('#noteTitle').value.trim(),content=$('#noteContent').value.trim();if(!title||!content)return;notes.unshift({id:crypto.randomUUID(),title,content,created:new Date().toISOString()});e.target.reset();saveNotes();toast('Note saved')});
 function addMessage(who,text){const transcript=$('#voiceTranscript');if(transcript){const empty=$('.voice-transcript-empty',transcript);if(empty)empty.remove();const line=document.createElement('div');line.className='voice-transcript-line '+(who==='user'?'transcript-user':'transcript-assistant');const label=document.createElement('strong');label.textContent=who==='user'?'YOU':'ULTRON';const content=document.createElement('p');content.textContent=text;line.append(label,content);transcript.append(line);transcript.scrollTop=transcript.scrollHeight;while(transcript.children.length>12)transcript.firstElementChild.remove()}const row=document.createElement('div');row.className='message '+(who==='user'?'user-message':'assistant-message');if(who==='assistant'){const a=document.createElement('div');a.className='message-avatar';a.textContent='✳';row.append(a)}const body=document.createElement('div'),name=document.createElement('strong'),p=document.createElement('p');body.className='message-body';name.textContent=who==='user'?'YOU':'ULTRON';p.textContent=text;body.append(name,p);row.append(body);$('#chatMessages').append(row);$('#chatMessages').scrollTop=$('#chatMessages').scrollHeight}
+const galleryItems=[];
+function renderGallery(){
+ const grid=$('#galleryGrid');grid.replaceChildren();$('#galleryCount').textContent=galleryItems.length+' image'+(galleryItems.length===1?'':'s');
+ if(!galleryItems.length){const empty=document.createElement('div');empty.className='gallery-empty';empty.innerHTML='<span>▧</span><strong>Your gallery is ready</strong><p>Say “open gallery” or add images from your device.</p>';grid.append(empty);return}
+ galleryItems.forEach((item,index)=>{const card=document.createElement('article');card.className='gallery-card';const img=document.createElement('img');img.src=item.url;img.alt=item.name;const footer=document.createElement('div'),name=document.createElement('span'),remove=document.createElement('button');name.textContent=item.name;remove.textContent='Remove';remove.type='button';remove.addEventListener('click',()=>{URL.revokeObjectURL(item.url);galleryItems.splice(index,1);renderGallery()});footer.append(name,remove);card.append(img,footer);grid.append(card)});
+}
+$('#galleryFiles').addEventListener('change',event=>{
+ const files=[...event.target.files||[]].filter(file=>file.type.startsWith('image/')).slice(0,30);
+ files.forEach(file=>galleryItems.push({name:file.name,url:URL.createObjectURL(file)}));renderGallery();event.target.value='';
+});
+renderGallery();
+function runAppCommand(input){
+ const text=input.trim(),s=text.toLowerCase().replace(/[.!?]+$/,'');
+ const pageAliases={home:'overview',overview:'overview',dashboard:'overview','ai chat':'assistant',chat:'assistant',assistant:'assistant','voice room':'voice',voice:'voice',gallery:'gallery',photos:'gallery',images:'gallery',tasks:'tasks',task:'tasks',notes:'notes',settings:'settings',integrations:'integrations',plans:'plans',subscriptions:'plans','owner console':'owner'};
+ const open=s.match(/^(?:please\s+)?(?:open|go to|show me|take me to|switch to|navigate to)\s+(.+)$/i);
+ if(open){
+  const target=open[1].replace(/^(?:the|my)\s+/,'').trim();
+  if(pageAliases[target]){const page=pageAliases[target];if(page==='owner'&&$('#ownerNav').hidden)return "Owner Console is restricted to the verified owner account.";navigate(page);return "Opening "+(page==='assistant'?'AI Chat':page==='voice'?'Voice Room':page.charAt(0).toUpperCase()+page.slice(1))+" now."}
+  const sites={youtube:'https://www.youtube.com',google:'https://www.google.com',gmail:'https://mail.google.com',drive:'https://drive.google.com',calendar:'https://calendar.google.com',maps:'https://maps.google.com',wikipedia:'https://www.wikipedia.org'};
+  if(sites[target]){window.open(sites[target],'_blank','noopener,noreferrer');return "Opening "+target+" in a new tab."}
+  return "I don't have a "+target+" section yet. Try Gallery, Tasks, Notes, AI Chat, Voice Room, or Settings.";
+ }
+ const addTask=text.match(/^(?:please\s+)?(?:add|create|make)\s+(?:a\s+)?task\s*[:,-]?\s*(.+)$/i);
+ if(addTask){const task=addTask[1].trim();if(task.length>180)return "That task is too long. Keep it under 180 characters.";tasks.unshift({id:crypto.randomUUID(),text:task,done:false,created:new Date().toISOString()});saveTasks();return "Done. I've added “"+task+"” to your Tasks."}
+ if(/^(?:show|list|read|what are)\s+(?:me\s+)?(?:my\s+)?tasks$/.test(s)){if(!tasks.length)return "Your task list is empty. Say “add task” followed by what you need to do.";return "Here are your tasks: "+tasks.slice(0,8).map((t,i)=>(i+1)+". "+t.text+(t.done?" — completed":"")).join("; ")}
+ const createNote=text.match(/^(?:save|create|add)\s+(?:a\s+)?note\s+(?:called\s+)?(.+?)(?:\s+saying\s+|\s+with content\s+)(.+)$/i);
+ if(createNote){notes.unshift({id:crypto.randomUUID(),title:createNote[1].trim().slice(0,90),content:createNote[2].trim().slice(0,5000),created:new Date().toISOString()});saveNotes();return "Saved your note, “"+createNote[1].trim()+"”."}
+ if(/^(?:stop|be quiet|stop talking|silence)$/.test(s)){if('speechSynthesis'in window)window.speechSynthesis.cancel();return "Okay. Voice output stopped."}
+ if(/^(?:what can you do|help|commands)$/.test(s))return "I can open Gallery, Tasks, Notes, AI Chat, Voice Room, Settings, Integrations and Plans. You can say “add task finish homework”, “show my tasks”, or “open YouTube”.";
+ return null;
+}
 function localReply(input){const s=input.toLowerCase();if(/hello|hi|hey|yo/.test(s))return"Hello. I'm ready to help you think things through. What are we working on?";if(/plan|day|schedule/.test(s))return"Let's make a simple plan:\n1. Pick your three most important tasks.\n2. Start with the task that matters most.\n3. Work in a focused block, then take a short break.\n4. Review what you completed.\n\nYou can save each step in Tasks.";if(/idea|project/.test(s))return"Start with three things: the problem you want to solve, who it helps, and the smallest useful version you can build. Save the idea in Notes, then turn the first action into a task.";if(/focus|concentrat/.test(s))return"Try a short focus cycle: choose one task, close unrelated tabs, work for 20 minutes, then take a 5-minute break. Make the next action small enough to start now.";if(/task|todo|work/.test(s))return"Let's make it actionable. Open Tasks and add one clear next step. If the goal feels too big, split it into smaller actions.";if(/note|remember|save/.test(s))return"You can keep that thought in Notes. Give it a short title and add the details you want to remember.";if(/who are you|what are you|ultron/.test(s))return"I'm ULTRON, your personal workspace preview. I can organise tasks and notes in this browser and provide basic demo replies. A live AI model and cloud account are not connected yet.";return"I can help structure that. Tell me the outcome you want, what you've tried, and the next decision you need to make. Note: this preview uses built-in demo responses, not a live AI model."}
 $('#chatForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#chatInput'),v=i.value.trim();if(!v)return;i.value='';processUserCommand(v,false)});
 $$('.suggestion').forEach(b=>b.addEventListener('click',()=>{$('#chatInput').value=b.textContent;$('#chatForm').requestSubmit()}));$('#clearChat').addEventListener('click',()=>{chatHistory=[];$('#chatMessages').innerHTML='';$('#voiceTranscript').innerHTML='<p class="voice-transcript-empty">Your spoken conversations will appear here.</p>';addMessage('assistant','Conversation cleared. What would you like to explore next?')});
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 let manualRecognition=null,wakeRecognition=null,wakeEnabled=false,speechReplies=true,manualListening=false;
-function voiceStatus(m){$('#voiceStatus').textContent=m;$('#wakeStatus').textContent=m;$('#voiceRoomMode').textContent=m.toUpperCase().slice(0,42)}
+function voiceStatus(m){$('#voiceStatus').textContent=m;$('#wakeStatus').textContent=m;$('#voiceRoomMode').textContent=m.toUpperCase().slice(0,42);$('#voiceOrb').classList.toggle('voice-active',/listening|thinking|speaking/i.test(m))}
+
+function chooseUltronVoice(voices){
+ const english=voices.filter(v=>/^en[-_]/i.test(v.lang));
+ const pool=english.length?english:voices;
+ const preferred=pool.find(v=>/Google US English|Microsoft.*(Aria|Jenny|Guy|Sonia|Ryan)|Natural|Neural|Premium/i.test(v.name));
+ return preferred||pool.find(v=>/English/i.test(v.name))||pool[0]||null;
+}
+function populateVoiceChoices(){
+ if(!('speechSynthesis'in window))return;
+ const select=$('#voiceChoice'),previous=store.get('voice_uri','auto'),voices=window.speechSynthesis.getVoices();
+ if(!select)return;
+ const sorted=[...voices].sort((a,b)=>a.lang.localeCompare(b.lang)||a.name.localeCompare(b.name));
+ select.replaceChildren();const automatic=document.createElement('option');automatic.value='auto';automatic.textContent='Best available voice';select.append(automatic);
+ sorted.forEach(voice=>{const option=document.createElement('option');option.value=voice.voiceURI;option.textContent=voice.name+' · '+voice.lang;select.append(option)});
+ select.value=sorted.some(v=>v.voiceURI===previous)?previous:'auto';
+}
+
 function speakText(text){
   if(!speechReplies||!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined')return Promise.resolve();
   window.speechSynthesis.cancel();
   return new Promise(resolve=>{
     const utterance=new SpeechSynthesisUtterance(text);
-    utterance.lang=navigator.language||'en-US';utterance.rate=1;utterance.pitch=1;
-    utterance.onend=resolve;utterance.onerror=resolve;
+    const selected=$('#voiceChoice')?.value||'auto';
+    const voices=window.speechSynthesis.getVoices();
+    const voice=selected==='auto'?chooseUltronVoice(voices):voices.find(v=>v.voiceURI===selected);
+    if(voice)utterance.voice=voice;
+    utterance.lang=voice?.lang||navigator.language||'en-US';
+    utterance.rate=Number($('#voiceSpeed')?.value||0.96);utterance.pitch=0.92;
+    document.body.classList.add('ultron-speaking');
+    utterance.onstart=()=>document.body.classList.add('ultron-speaking');
+    utterance.onend=()=>{document.body.classList.remove('ultron-speaking');resolve()};
+    utterance.onerror=()=>{document.body.classList.remove('ultron-speaking');resolve()};
     window.speechSynthesis.speak(utterance);
   });
 }
 async function processUserCommand(text,fromWake){
  const clean=text.trim();if(!clean)return;
+ const send=$('#chatSend');if(send){send.disabled=true;send.classList.add('sending');send.innerHTML='<span>Thinking</span><b>…</b>'}
+ const messages=$('#chatMessages');const pending=document.createElement('div');pending.className='message assistant-message typing-indicator';pending.innerHTML='<div class="message-avatar">✳</div><div class="message-body"><strong>ULTRON</strong><p><i></i><i></i><i></i></p></div>';messages.append(pending);messages.scrollTop=messages.scrollHeight;
  addMessage('user',clean);chatHistory.push({role:'user',content:clean});
- let reply='';
- if(currentUser&&supabaseClient){
+ let reply='';const actionReply=runAppCommand(clean);
+ if(actionReply!==null){reply=actionReply;}
+ else if(currentUser&&supabaseClient){
   voiceStatus('Thinking…');
   try{
    const {data,error}=await supabaseClient.functions.invoke('ultron-chat',{body:{message:clean,history:chatHistory.slice(-11,-1)}});
@@ -63,7 +123,7 @@ async function processUserCommand(text,fromWake){
   if(!currentUser)reply+='\n\nSign in under Settings to use the connected AI service and private cloud workspace.';
  }
  chatHistory.push({role:'assistant',content:reply});chatHistory=chatHistory.slice(-12);
- addMessage('assistant',reply);voiceStatus(currentUser?'AI response ready.':'Demo mode. Sign in to enable real AI.');
+ pending.remove();if(send){send.disabled=false;send.classList.remove('sending');send.innerHTML='<span>Send</span><b>↗</b>'}addMessage('assistant',reply);voiceStatus(actionReply!==null?'Command completed.':currentUser?'AI response ready.':'Demo mode. Sign in to enable real AI.');
  if(fromWake||$('#view-voice').classList.contains('active-view'))await speakText(reply);
  if(wakeEnabled&&fromWake)setTimeout(startWakeListener,700);
 }
@@ -115,6 +175,12 @@ $('#wakeToggle').addEventListener('click',()=>{
   if(wakeEnabled){$('#wakeToggle').textContent='Disable wake word';voiceStatus('Requesting microphone access…');startWakeListener()}
   else{stopWakeRecognition();$('#voiceOrb').classList.remove('voice-active');$('#wakeToggle').textContent='Enable wake word';voiceStatus('Wake word is off. Microphone listening has stopped.')}
 });
+$('#voiceChoice').addEventListener('change',()=>{store.set('voice_uri',$('#voiceChoice').value);toast('ULTRON voice updated')});
+$('#voiceSpeed').addEventListener('input',()=>{$('#voiceSpeedValue').textContent=Number($('#voiceSpeed').value).toFixed(2)+'×';store.set('voice_speed',$('#voiceSpeed').value)});
+$('#voiceSpeed').value=store.get('voice_speed','0.96');$('#voiceSpeedValue').textContent=Number($('#voiceSpeed').value).toFixed(2)+'×';
+$('#testVoice').addEventListener('click',()=>speakText("Hello. I am ULTRON. Your voice settings are ready."));
+$('#stopSpeaking').addEventListener('click',()=>{if('speechSynthesis'in window)window.speechSynthesis.cancel();document.body.classList.remove('ultron-speaking');voiceStatus('Voice output stopped.')});
+if('speechSynthesis'in window){populateVoiceChoices();window.speechSynthesis.onvoiceschanged=populateVoiceChoices}
 $('#speechToggle').addEventListener('click',()=>{
   speechReplies=!speechReplies;$('#speechToggle').textContent='Voice replies: '+(speechReplies?'On':'Off');
   if(!speechReplies&&'speechSynthesis' in window)window.speechSynthesis.cancel();
@@ -133,7 +199,7 @@ $('#voiceButton').addEventListener('click',()=>{
   manualRecognition.onstart=()=>{manualListening=true;$('#voiceButton').classList.add('listening');$('#voiceButton').querySelector('strong').textContent='Listening…';voiceStatus('Listening… Speak now.')};
   manualRecognition.onresult=e=>{const transcript=e.results[0][0].transcript.trim();$('#chatInput').value=transcript;voiceStatus('You said: '+transcript);processUserCommand(transcript,false)};
   manualRecognition.onerror=e=>voiceStatus('Voice input issue: '+e.error+'. You can type instead.');
-  manualRecognition.onend=()=>{manualListening=false;$('#voiceButton').classList.remove('listening');$('#voiceButton').querySelector('strong').textContent='Start speaking';if(wakeEnabled)startWakeListener()};
+  manualRecognition.onend=()=>{manualListening=false;$('#voiceButton').classList.remove('listening');$('#voiceButton').querySelector('strong').textContent='Tap to talk';if(wakeEnabled)startWakeListener()};
   try{manualRecognition.start()}catch{voiceStatus('Could not start voice input. Check microphone permission.')}
 });
 function toggleTheme(){document.body.classList.toggle('light-mode');const light=document.body.classList.contains('light-mode');store.set('theme',light?'light':'dark');toast(light?'Light mode enabled':'Dark mode enabled')}
