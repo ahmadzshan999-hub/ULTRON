@@ -38,6 +38,33 @@ body.light-mode .message-body p{color:#4d5870}
 .plans-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;align-items:stretch}.plan-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:22px;display:flex;flex-direction:column;min-height:350px}.featured-plan{border-color:rgba(165,139,255,.55);box-shadow:0 15px 50px rgba(112,87,204,.12);background:linear-gradient(160deg,rgba(165,139,255,.1),var(--panel) 45%)}.plan-tier{font-size:9px;letter-spacing:1.5px;color:#b8a6ff;font-weight:700}.plan-card h2{font:600 25px "Space Grotesk";margin:13px 0 4px}.plan-price{font:600 22px "Space Grotesk";margin:0 0 10px}.plan-price small{font:400 10px "DM Sans";color:#8290a6}.plan-desc{font-size:11px;color:#9aa6ba;line-height:1.6;min-height:37px}.plan-card ul{padding-left:17px;color:#c2cad8;font-size:11px;line-height:2.1;margin:14px 0 22px}.plan-tag{display:inline-flex;align-self:flex-start;margin-top:auto;padding:7px 9px;border:1px solid rgba(165,139,255,.24);border-radius:7px;color:#c6b8ff;font-size:9px;letter-spacing:1px;font-weight:700}.owner-lock-card{max-width:760px;padding:28px;background:var(--panel);border:1px solid rgba(165,139,255,.25);border-radius:16px}.owner-lock-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(165,139,255,.13);color:#c4b5ff;font-size:23px}.owner-lock-card h2{font:600 23px "Space Grotesk";margin:18px 0 8px}.owner-lock-card>p{color:#9ba7bb;font-size:12px;line-height:1.7}.owner-security-list{display:grid;gap:10px;margin:20px 0}.owner-security-list div{padding:13px;border:1px solid var(--line);border-radius:10px}.owner-security-list strong,.owner-security-list span{display:block}.owner-security-list strong{font-size:11px;margin-bottom:5px}.owner-security-list span{font-size:10px;color:#909cb1;line-height:1.6}
 @media(max-width:900px){.plans-grid{grid-template-columns:1fr}.plan-card{min-height:0}.plan-desc{min-height:0}}@media(max-width:600px){.owner-link{font-size:9px;padding:7px}.top-actions{gap:8px}.local-indicator{display:none}}
 
+  
+/* ULTRON visual refresh */
+:root{--accent:#9b7bff;--accent2:#4de3d2;--glow:rgba(155,123,255,.22)}
+body{background:radial-gradient(ellipse at 75% -10%,rgba(116,82,232,.22),transparent 38%),radial-gradient(ellipse at 5% 55%,rgba(38,191,184,.08),transparent 32%),#080a12}
+.sidebar{background:linear-gradient(180deg,rgba(13,16,29,.98),rgba(8,11,19,.98));backdrop-filter:blur(18px)}
+.brand-mark{box-shadow:0 0 22px var(--glow);background:rgba(155,123,255,.08)}
+.brand-dot{ text-shadow:0 0 18px var(--accent)}
+.nav-item,.new-chat,button,.card,.panel,.stat-card,.task-card,.note-card{transition:background .2s ease,border-color .2s ease,transform .2s ease,box-shadow .2s ease}
+.nav-item:hover{transform:translateX(3px);background:rgba(155,123,255,.12)}
+.new-chat{background:linear-gradient(110deg,rgba(155,123,255,.2),rgba(77,227,210,.08));box-shadow:0 8px 30px rgba(0,0,0,.16)}
+.new-chat:hover{border-color:rgba(77,227,210,.55);transform:translateY(-2px);box-shadow:0 10px 28px rgba(77,227,210,.1)}
+button:not(.nav-item):not(.profile-menu):hover{filter:brightness(1.12);transform:translateY(-1px)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent2);outline-offset:3px}
+.main-area{background:linear-gradient(135deg,rgba(13,17,29,.18),transparent 48%)}
+.card,.panel,.stat-card,.task-card,.note-card{border-color:rgba(161,176,216,.16);box-shadow:0 14px 42px rgba(0,0,0,.14)}
+.card:hover,.panel:hover,.stat-card:hover,.task-card:hover,.note-card:hover{border-color:rgba(155,123,255,.35);box-shadow:0 18px 48px rgba(0,0,0,.22),0 0 24px rgba(155,123,255,.06)}
+h1,h2,h3{letter-spacing:-.035em}
+.eyebrow{color:#9f91df}
+.status-card{box-shadow:inset 0 0 24px rgba(77,227,210,.035)}
+input,textarea{background:rgba(7,10,18,.65)!important;border-color:rgba(161,176,216,.2)!important}
+input:focus,textarea:focus{border-color:rgba(77,227,210,.55)!important;box-shadow:0 0 0 3px rgba(77,227,210,.08)}
+#ownerShortcut{border:1px solid rgba(155,123,255,.32);background:linear-gradient(110deg,rgba(155,123,255,.16),rgba(77,227,210,.07));border-radius:10px}
+#ownerShortcut:hover{box-shadow:0 0 24px rgba(155,123,255,.14)}
+@keyframes ultronFadeUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+.view:not(.hidden){animation:ultronFadeUp .28s ease both}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
   </style>
 </head>
 <body>
