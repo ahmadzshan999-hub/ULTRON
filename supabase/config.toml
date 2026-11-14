@@ -1,2 +1,5 @@
 [functions.ultron-chat]
 verify_jwt = true
+
+[functions.ultron-admin]
+verify_jwt = true
