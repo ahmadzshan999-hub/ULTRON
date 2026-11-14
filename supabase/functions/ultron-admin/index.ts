@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
     const [tasks, notes, grants] = await Promise.all([
       admin.from("tasks").select("id", { count: "exact", head: true }),
       admin.from("notes").select("id", { count: "exact", head: true }),
-      admin.from("ultron_entitlements").select("user_id", { count: "exact", head: true }).eq("status", "active"),
+      admin.from("ultron_entitlements").select("user_id", { count: "exact", head: true }).eq("status", "active").or("expires_at.is.null,expires_at.gt." + new Date().toISOString()),
     ]);
     if (tasks.error || notes.error || grants.error) return json({ error: "Could not load owner overview. Check that all migrations have been applied." }, 503, headers);
     return json({ role: "owner", metrics: { tasks: tasks.count ?? 0, notes: notes.count ?? 0, activeGrants: grants.count ?? 0 }, checked_at: new Date().toISOString() }, 200, headers);
