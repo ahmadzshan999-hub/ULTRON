@@ -256,9 +256,14 @@ function renderOwnerActivity(events){
  events.forEach(event=>{
   const row=document.createElement('div');row.className='owner-event';
   const info=document.createElement('div'),title=document.createElement('strong'),meta=document.createElement('small'),plan=document.createElement('span');
-  title.textContent=(event.action==='grant'?'Granted ':'Revoked ')+(event.plan||'plan').toUpperCase();
+  const ownerEvent=event.action==='owner_added'||event.action==='owner_removed';
+  title.textContent=event.action==='grant'?'Granted '+(event.plan||'plan').toUpperCase()
+   :event.action==='revoke'?'Revoked '+(event.plan||'plan').toUpperCase()
+   :event.action==='owner_added'?'Added owner access'
+   :'Removed owner access';
   meta.textContent=(event.target_email_hint||'Account')+' · '+new Date(event.created_at).toLocaleString()+(event.duration?' · '+(event.duration==='forever'?'No expiry':event.duration+' days'):'');
-  plan.className='owner-event-plan';plan.textContent=event.action==='grant'?'COMPLIMENTARY':'REVOKED';
+  plan.className='owner-event-plan';
+  plan.textContent=ownerEvent?'OWNER ACCESS':event.action==='grant'?'COMPLIMENTARY':'REVOKED';
   info.append(title,meta);row.append(info,plan);list.append(row);
  });
 }
