@@ -93,6 +93,12 @@
 <button class="primary-button" id="grantPlanButton" type="submit">Grant free subscription</button></form>
 <div class="owner-revoke"><div><strong>Remove a complimentary upgrade</strong><small>Enter the same account email to return it to the Free plan.</small></div><button class="danger-button" id="revokePlanButton" type="button">Revoke upgrade</button></div>
 <p class="owner-action-status" id="ownerActionStatus" role="status" aria-live="polite">Only verified existing accounts can receive a grant. Grants are recorded on the server.</p></div>
+<div class="owner-management-panel">
+<div class="owner-activity-heading"><div><div class="eyebrow">ACCESS CONTROL</div><h2>Owner Management</h2><p>Give another verified ULTRON account full owner access, or remove an existing owner's access.</p></div><span class="owner-activity-count" id="ownerDirectoryCount">0 owners</span></div>
+<form id="addOwnerForm" class="owner-management-form"><label for="ownerEmail">VERIFIED ACCOUNT EMAIL</label><input id="ownerEmail" type="email" maxlength="254" placeholder="person@example.com" autocomplete="off" required><button class="primary-button" id="addOwnerButton" type="submit">＋ Add owner</button></form>
+<p class="owner-action-status" id="ownerManagementStatus" role="status" aria-live="polite">Only verified existing accounts can become owners. Every change is recorded in the private audit log.</p>
+<div class="owner-directory" id="ownerDirectory"><p class="owner-activity-empty">Loading owner accounts…</p></div>
+</div>
 <div class="owner-activity-panel"><div class="owner-activity-heading"><div><div class="eyebrow">SECURITY & ACTIVITY</div><h2>Owner activity log</h2><p>Recent complimentary plan changes made through this console.</p></div><span class="owner-activity-count" id="ownerActivityCount">0 events</span></div><div id="ownerActivityList" class="owner-activity-list"><p class="owner-activity-empty">No recorded owner actions yet.</p></div></div>
 <div class="owner-shortcuts"><div><div class="eyebrow">QUICK LAUNCH</div><h2>Your command shortcuts</h2></div><button class="secondary-button" data-go="assistant">Open AI chat ↗</button><button class="secondary-button" data-go="voice">Enter Voice Room ◉</button></div>
 <p class="settings-footnote">This console shows aggregate service information and a record of owner plan changes, not private user content. All privileged actions are verified by the server. Diagnostics check configuration only; they do not guarantee that a third-party AI provider is reachable.</p></section>
