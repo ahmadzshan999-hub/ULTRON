@@ -377,7 +377,7 @@ async function refreshAccount(){
  const {data:{session}}=await supabaseClient.auth.getSession();
  currentUser=session?.user||null;
  $('#signedOutPanel').hidden=!!currentUser;$('#signedInPanel').hidden=!currentUser;
- $('#accountState').textContent=currentUser?'Signed in':'Signed out';
+ $('#accountState').textContent=currentUser?'Signed in':'Signed out';$('#profileStatus').textContent=currentUser?(currentUser.email||'Signed in'):'Sign in to sync';
  $('#signedInEmail').textContent=currentUser?.email||'Signed in';
  if(currentUser)await loadMembership();else $('#membershipStatus').hidden=true;
  $('#connectionIndicator').innerHTML='<i></i> '+(currentUser?'CLOUD ACCOUNT':'LOCAL MODE');
@@ -407,9 +407,13 @@ $('#sendSignInLink').addEventListener('click',async()=>{
  if(!email){$('#authMessage').textContent='Enter your email address first.';return}
  if(!supabaseClient){$('#authMessage').textContent='Supabase configuration is missing.';return}
  store.set('local_backup',{tasks,notes});$('#sendSignInLink').disabled=true;$('#authMessage').textContent='Sending your secure sign-in link…';
- const {error}=await supabaseClient.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
- $('#sendSignInLink').disabled=false;
- $('#authMessage').textContent=error?'Could not send the link: '+error.message:'Check your email for the ULTRON sign-in link. Open it in this browser to finish signing in.';
+ try{
+  const {error}=await supabaseClient.auth.signInWithOtp({email,options:{emailRedirectTo:new URL('./',window.location.href).toString()}});
+  $('#authMessage').textContent=error?'Could not send the link: '+error.message:'Check your email for the ULTRON sign-in link. Open it in this browser to finish signing in.';
+ }catch(error){
+  console.error('ULTRON sign-in request failed',error);
+  $('#authMessage').textContent='Could not contact the sign-in service. Check your connection and try again.';
+ }finally{$('#sendSignInLink').disabled=false}
 });
 $('#signOut').addEventListener('click',async()=>{
  if(!supabaseClient)return;
