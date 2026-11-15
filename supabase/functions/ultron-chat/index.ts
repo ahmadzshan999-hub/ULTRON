@@ -104,7 +104,16 @@ Deno.serve(async (req: Request) => {
   }
 
   // Enforce a per-user server-side quota before spending provider credits.
-  const { data: allowed, error: quotaError } = await supabase.rpc("consume_ultron_ai_quota");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!serviceRoleKey) {
+    return json({ error: "ULTRON quota service is not configured." }, 503, headers);
+  }
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: allowed, error: quotaError } = await admin.rpc("consume_ultron_ai_quota", {
+    p_user_id: user.id,
+  });
   if (quotaError) {
     console.error("ULTRON quota check failed:", quotaError.message);
     return json({ error: "ULTRON is temporarily unavailable. Please try again later." }, 503, headers);
