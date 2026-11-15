@@ -73,6 +73,18 @@ Deno.serve(async (req: Request) => {
     return json({ role: "owner", metrics: { tasks: tasks.count ?? 0, notes: notes.count ?? 0, activeGrants: grants.count ?? 0 }, recentActivity: activity.data ?? [], checked_at: new Date().toISOString() }, 200, headers);
   }
 
+  if (action === "list_owners") {
+    const { data: ownerRows, error: ownersError } = await admin
+      .from("ultron_user_roles").select("user_id,created_at").order("created_at", { ascending: true });
+    if (ownersError) return json({ error: "Could not load the owner list." }, 503, headers);
+    const owners = await Promise.all((ownerRows ?? []).map(async (row) => {
+      const { data, error } = await admin.auth.admin.getUserById(row.user_id);
+      if (error || !data.user?.email) return null;
+      return { email: data.user.email, created_at: row.created_at };
+    }));
+    return json({ role: "owner", owners: owners.filter(Boolean) }, 200, headers);
+  }
+
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Enter a valid email address." }, 400, headers);
   let target: { id: string; email?: string; email_confirmed_at?: string | null } | null = null;
@@ -84,6 +96,24 @@ Deno.serve(async (req: Request) => {
   }
   if (!target) return json({ error: "No account found. Ask them to sign up and verify their email first." }, 404, headers);
   if (!target.email_confirmed_at) return json({ error: "That account must verify its email before receiving a complimentary plan." }, 409, headers);
+
+  if (action === "add_owner" || action === "remove_owner") {
+    const { data: result, error } = await admin.rpc("ultron_manage_owner", {
+      p_target_user_id: target.id,
+      p_actor_user_id: user.id,
+      p_action: action === "add_owner" ? "add" : "remove",
+      p_target_email_hint: emailHint(email),
+    });
+    if (error) return json({ error: "Owner change failed. Confirm the owner-management migration is applied." }, 503, headers);
+    if (result === "already_owner") return json({ error: "That account is already an owner." }, 409, headers);
+    if (result === "not_owner") return json({ error: "That account is not currently an owner." }, 404, headers);
+    if (result === "last_owner") return json({ error: "The last remaining owner cannot be removed. Add another owner first." }, 409, headers);
+    return json({
+      ok: true,
+      email: target.email,
+      message: action === "add_owner" ? "Owner access granted." : "Owner access removed.",
+    }, 200, headers);
+  }
 
   if (action === "grant") {
     if (body.plan !== "plus" && body.plan !== "pro") return json({ error: "Choose Plus or Pro." }, 400, headers);
