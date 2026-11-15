@@ -238,7 +238,7 @@ async function loadOwnerConsole(){
   $('#ownerNotes').textContent=String(data.metrics?.notes??'—');$('#ownerGrants').textContent=String(data.metrics?.activeGrants??'—');
   $('#ownerStatus').textContent='Owner access verified · Mission Control active';
   renderOwnerActivity(data.recentActivity||[]);
-  await runOwnerDiagnostics();
+  await Promise.all([runOwnerDiagnostics(),loadOwnerDirectory()]);
  }catch(error){
   $('#ownerNav').hidden=true;
   $('#ownerStatus').textContent='Owner access is not assigned or the admin service is not deployed.';
@@ -301,6 +301,59 @@ async function ownerPlanAction(action){
 $('#grantPlanForm').addEventListener('submit',event=>{event.preventDefault();ownerPlanAction('grant')});
 $('#revokePlanButton').addEventListener('click',()=>ownerPlanAction('revoke'));
 
+
+
+async function loadOwnerDirectory(){
+ const list=$('#ownerDirectory');list.replaceChildren();
+ $('#ownerDirectoryCount').textContent='Loading…';
+ try{
+  const {data,error}=await supabaseClient.functions.invoke('ultron-admin',{body:{action:'list_owners'}});
+  if(error)throw error;
+  const owners=data?.owners||[];
+  $('#ownerDirectoryCount').textContent=owners.length+' owner'+(owners.length===1?'':'s');
+  if(!owners.length){const empty=document.createElement('p');empty.className='owner-activity-empty';empty.textContent='No owner accounts were returned.';list.append(empty);return}
+  owners.forEach(owner=>{
+   const row=document.createElement('div');row.className='owner-directory-row';
+   const info=document.createElement('div'),email=document.createElement('strong'),joined=document.createElement('small'),remove=document.createElement('button');
+   email.textContent=owner.email;
+   joined.textContent='Owner since '+new Date(owner.created_at).toLocaleDateString();
+   info.append(email,joined);
+   remove.type='button';remove.className='danger-button';remove.textContent='Remove access';
+   remove.addEventListener('click',()=>ownerRoleAction('remove_owner',owner.email));
+   row.append(info,remove);list.append(row);
+  });
+ }catch(error){
+  $('#ownerDirectoryCount').textContent='Unavailable';
+  const message=document.createElement('p');message.className='owner-activity-empty';
+  message.textContent=error?.message||'Could not load owner accounts. Check the latest admin function and migration.';
+  list.append(message);
+ }
+}
+async function ownerRoleAction(action,email){
+ const adding=action==='add_owner';
+ const prompt=adding
+  ?'Give '+email+' full ULTRON owner access? They will be able to manage other owners and complimentary plans.'
+  :'Remove owner access from '+email+'? They will lose access to the Owner Console.';
+ if(!confirm(prompt))return;
+ const button=adding?$('#addOwnerButton'):null;
+ if(button)button.disabled=true;
+ $('#ownerManagementStatus').textContent='Verifying permissions and updating owner access…';
+ try{
+  const {data,error}=await supabaseClient.functions.invoke('ultron-admin',{body:{action,email}});
+  if(error)throw error;
+  $('#ownerManagementStatus').textContent=data.message||'Owner access updated.';
+  if(adding)$('#ownerEmail').value='';
+  await loadOwnerDirectory();
+  await loadOwnerConsole();
+ }catch(error){
+  $('#ownerManagementStatus').textContent=error?.message||'Owner change failed. Check the admin function deployment and migrations.';
+ }finally{if(button)button.disabled=false}
+}
+$('#addOwnerForm').addEventListener('submit',event=>{
+ event.preventDefault();
+ const email=$('#ownerEmail').value.trim();
+ if(email)ownerRoleAction('add_owner',email);
+});
 
 async function loadMembership(){
  $('#membershipStatus').hidden=true;
