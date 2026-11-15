@@ -12,6 +12,7 @@ In the Supabase SQL Editor, run these files in this order:
 4. `supabase/migrations/20261117000000_complimentary_entitlements.sql` — private complimentary plan entitlements.
 5. `supabase/migrations/20261118000000_tier_ai_limits.sql` — enforce AI request limits for each plan.
 6. `supabase/migrations/20261119000000_owner_audit.sql` — private audit log for owner plan changes.
+7. `supabase/migrations/20261120000000_multi_owner_management.sql` — atomic multi-owner management and audit events.
 
 Do not run both `schema.sql` and the first migration; they create the same tasks/notes foundation. Confirm that `tasks`, `notes`, `ultron_ai_usage`, and `ultron_user_roles`, and `ultron_entitlements` exist.
 
@@ -47,7 +48,7 @@ Deploy `supabase/functions/ultron-chat` with JWT verification enabled. The funct
 
 ## 5. Activate the Owner Console
 
-The Owner Console is hidden until the server verifies the signed-in account's owner role. It includes aggregate metrics, configuration diagnostics, and a private audit log of complimentary plan changes; it does not expose private task or note content.
+The Owner Console is hidden until the server verifies the signed-in account's owner role. It includes aggregate metrics, configuration diagnostics, complimentary plan controls, multi-owner management, and a private audit log; it does not expose private task or note content.
 
 1. After the intended owner signs in once, open Supabase Authentication → Users and copy that account's user UUID locally.
 2. In the Supabase SQL Editor, run the following statement, replacing the placeholder with the verified UUID:
@@ -84,3 +85,8 @@ No external account is connected and no payment is being collected by this previ
 ## 9. Voice limitations
 
 Open the Voice Room from the sidebar for the dedicated microphone interface. Browser speech recognition and spoken replies require a supported browser, microphone permission, and the ULTRON tab open and visible. A web page cannot listen for a wake word after the browser is closed. A native app or supported operating-system integration would be needed for that.
+
+
+## 10. Multiple trusted owners
+
+After applying migration `20261120000000_multi_owner_management.sql` and redeploying `ultron-admin`, any verified owner can open Owner Console → Owner Management. Enter the exact email of an existing ULTRON account whose email has been verified, then choose Add owner. Existing owners appear in the directory and can have access removed. All owner changes are checked on the server and recorded in the private audit log. The database function serializes owner changes and prevents removal of the final remaining owner. Only grant owner access to people you fully trust: every owner can add or remove other owners and manage complimentary plans.
