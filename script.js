@@ -7,7 +7,14 @@ const supabaseClient = window.supabase?.createClient && window.ULTRON_CONFIG?.ur
 let currentUser=null,chatHistory=[],cloudReady=false;
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2300)}
 function navigate(v){if(v==='owner'&&$('#ownerNav').hidden){v='settings';toast('Owner access is restricted.')}if(v!=='voice'&&typeof wakeEnabled!=='undefined'&&wakeEnabled){wakeEnabled=false;stopWakeRecognition();$('#wakeToggle').textContent='Enable wake word';$('#voiceOrb').classList.remove('voice-active')}if(v!=='voice'&&typeof manualListening!=='undefined'&&manualListening){try{manualRecognition.stop()}catch{}}$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Chat',tasks:'Tasks',notes:'Notes',settings:'Settings',integrations:'Integrations',plans:'Plans',owner:'Owner Console',voice:'Voice Room',gallery:'Gallery'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();if(v==='voice')$('#voiceButton').focus();window.scrollTo({top:0,behavior:'smooth'})}
-$$('[data-view]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));$$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
+$('[data-view]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));
+document.addEventListener('click',event=>{
+ const settingsButton=event.target.closest('[data-view="settings"]');
+ if(settingsButton){
+  event.preventDefault();
+  navigate('settings');
+ }
+});$$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
 $('#newChat').addEventListener('click',()=>{chatHistory=[];navigate('assistant');$('#chatMessages').innerHTML='';$('#voiceTranscript').innerHTML='<p class="voice-transcript-empty">Your spoken conversations will appear here.</p>';addMessage('assistant',"New conversation started. What's on your mind?")});
 $('#voiceButtonChat').addEventListener('click',()=>navigate('voice'));
 $('#chatInput').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();$('#chatForm').requestSubmit()}});
