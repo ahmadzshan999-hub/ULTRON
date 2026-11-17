@@ -4,7 +4,7 @@ let tasks=store.get('tasks',[]),notes=store.get('notes',[]),filter='all',toastTi
 const supabaseClient = window.supabase?.createClient && window.ULTRON_CONFIG?.url && window.ULTRON_CONFIG?.publishableKey
   ? window.supabase.createClient(window.ULTRON_CONFIG.url,window.ULTRON_CONFIG.publishableKey)
   : null;
-let currentUser=null,chatHistory=[],cloudReady=false;
+let currentUser=null,chatHistory=[],cloudReady=false,currentConversationId=null,savedConversations=[];
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('show'),2300)}
 function navigate(v){if(v==='owner'&&$('#ownerNav').hidden){v='settings';toast('Owner access is restricted.')}if(v!=='voice'&&typeof wakeEnabled!=='undefined'&&wakeEnabled){wakeEnabled=false;stopWakeRecognition();$('#wakeToggle').textContent='Enable wake word';$('#voiceOrb').classList.remove('voice-active')}if(v!=='voice'&&typeof manualListening!=='undefined'&&manualListening){try{manualRecognition.stop()}catch{}}$('.view').forEach(x=>x.classList.toggle('active-view',x.id==='view-'+v));$$('.nav-item[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));$('#pageName').textContent=({overview:'Overview',assistant:'AI Chat',tasks:'Tasks',notes:'Notes',settings:'Settings',integrations:'Integrations',plans:'Plans',owner:'Owner Console',voice:'Voice Room',gallery:'Gallery'})[v]||'Overview';$('#sidebar').classList.remove('open');if(v==='assistant')$('#chatInput').focus();if(v==='voice')$('#voiceButton').focus();window.scrollTo({top:0,behavior:'smooth'})}
 $('[data-view]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));
@@ -15,7 +15,7 @@ document.addEventListener('click',event=>{
   navigate('settings');
  }
 });$$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
-$('#newChat').addEventListener('click',()=>{chatHistory=[];navigate('assistant');$('#chatMessages').innerHTML='';$('#voiceTranscript').innerHTML='<p class="voice-transcript-empty">Your spoken conversations will appear here.</p>';addMessage('assistant',"New conversation started. What's on your mind?")});
+$('#newChat').addEventListener('click',()=>{currentConversationId=null;chatHistory=[];navigate('assistant');$('#chatMessages').innerHTML='';$('#voiceTranscript').innerHTML='<p class="voice-transcript-empty">Your spoken conversations will appear here.</p>';addMessage('assistant',"New conversation started. What's on your mind?");renderConversationHistory()});
 $('#voiceButtonChat').addEventListener('click',()=>navigate('voice'));
 $('#chatInput').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();$('#chatForm').requestSubmit()}});
 $('#openChatFromVoice').addEventListener('click',()=>navigate('assistant'));$('#mobileMenu').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
@@ -37,6 +37,46 @@ $$('.filter').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter
 function renderNotes(){const list=$('#notesList');if(!notes.length){list.innerHTML='<div class="empty-state"><span>▤</span><strong>Your notes will appear here</strong><p>Write something worth remembering.</p></div>';return}list.innerHTML=notes.map(n=>'<article class="note-card" data-id="'+n.id+'"><button class="delete-note" aria-label="Delete note">×</button><strong class="note-title"></strong><p class="note-content"></p><small>'+new Date(n.created).toLocaleString()+'</small></article>').join('');$$('.note-card',list).forEach(c=>{const n=notes.find(x=>x.id===c.dataset.id);$('.note-title',c).textContent=n.title;$('.note-content',c).textContent=n.content;$('.delete-note',c).addEventListener('click',()=>{notes=notes.filter(x=>x.id!==n.id);saveNotes();toast('Note deleted')})})}
 function saveNotes(){store.set('notes',notes);renderNotes();renderStats();if(currentUser&&cloudReady)syncRows('notes',notes.map(n=>({id:n.id,title:n.title,content:n.content,created_at:n.created||new Date().toISOString()}))).catch(e=>{console.error(e);toast('Cloud note sync failed.')})}
 $('#noteForm').addEventListener('submit',e=>{e.preventDefault();const title=$('#noteTitle').value.trim(),content=$('#noteContent').value.trim();if(!title||!content)return;notes.unshift({id:crypto.randomUUID(),title,content,created:new Date().toISOString()});e.target.reset();saveNotes();toast('Note saved')});
+async function loadConversationHistory(){
+ if(!currentUser||!supabaseClient){savedConversations=[];renderConversationHistory();return}
+ const {data,error}=await supabaseClient.from('ultron_conversations').select('id,title,updated_at').order('updated_at',{ascending:false}).limit(40);
+ if(error){console.warn('Chat history could not load:',error.message);return}
+ savedConversations=data||[];renderConversationHistory();
+}
+function renderConversationHistory(){
+ const host=$('#chatHistoryList');if(!host)return;host.replaceChildren();
+ if(!currentUser){const p=document.createElement('p');p.className='chat-history-empty';p.textContent='Sign in to save your chats.';host.append(p);return}
+ if(!savedConversations.length){const p=document.createElement('p');p.className='chat-history-empty';p.textContent='Your saved conversations will appear here.';host.append(p);return}
+ savedConversations.forEach(chat=>{
+  const button=document.createElement('button');button.type='button';button.className='chat-history-item'+(chat.id===currentConversationId?' active':'');
+  const label=document.createElement('span');label.textContent=chat.title||'New conversation';
+  const meta=document.createElement('small');meta.textContent=new Date(chat.updated_at).toLocaleDateString();
+  button.append(label,meta);button.addEventListener('click',()=>openSavedConversation(chat.id));host.append(button);
+ });
+}
+async function ensureConversation(firstMessage){
+ if(!currentUser||!supabaseClient)return null;
+ if(currentConversationId)return currentConversationId;
+ const title=firstMessage.trim().replace(/\\s+/g,' ').slice(0,72)||'New conversation';
+ const {data,error}=await supabaseClient.from('ultron_conversations').insert({user_id:currentUser.id,title}).select('id').single();
+ if(error)throw error;currentConversationId=data.id;await loadConversationHistory();return currentConversationId;
+}
+async function persistChatMessage(role,content){
+ if(!currentUser||!supabaseClient||!currentConversationId)return;
+ const {error}=await supabaseClient.from('ultron_messages').insert({conversation_id:currentConversationId,user_id:currentUser.id,role,content});
+ if(error)throw error;
+ await supabaseClient.from('ultron_conversations').update({updated_at:new Date().toISOString()}).eq('id',currentConversationId);
+}
+async function openSavedConversation(id){
+ if(!currentUser||!supabaseClient)return;
+ const {data,error}=await supabaseClient.from('ultron_messages').select('role,content,created_at').eq('conversation_id',id).order('created_at',{ascending:true}).limit(100);
+ if(error){toast('Could not open that conversation.');return}
+ currentConversationId=id;chatHistory=(data||[]).map(m=>({role:m.role,content:m.content}));
+ $('#chatMessages').replaceChildren();$('#voiceTranscript').innerHTML='<p class="voice-transcript-empty">Your spoken conversations will appear here.</p>';
+ if(!chatHistory.length)addMessage('assistant','This conversation is empty. Send a message to begin.');
+ else chatHistory.forEach(m=>addMessage(m.role,m.content));
+ renderConversationHistory();navigate('assistant');
+}
 function addMessage(who,text){const transcript=$('#voiceTranscript');if(transcript){const empty=$('.voice-transcript-empty',transcript);if(empty)empty.remove();const line=document.createElement('div');line.className='voice-transcript-line '+(who==='user'?'transcript-user':'transcript-assistant');const label=document.createElement('strong');label.textContent=who==='user'?'YOU':'ULTRON';const content=document.createElement('p');content.textContent=text;line.append(label,content);transcript.append(line);transcript.scrollTop=transcript.scrollHeight;while(transcript.children.length>12)transcript.firstElementChild.remove()}const row=document.createElement('div');row.className='message '+(who==='user'?'user-message':'assistant-message');if(who==='assistant'){const a=document.createElement('div');a.className='message-avatar';a.textContent='✳';row.append(a)}const body=document.createElement('div'),name=document.createElement('strong'),p=document.createElement('p');body.className='message-body';name.textContent=who==='user'?'YOU':'ULTRON';p.textContent=text;body.append(name,p);row.append(body);$('#chatMessages').append(row);$('#chatMessages').scrollTop=$('#chatMessages').scrollHeight}
 const galleryItems=[];
 function renderGallery(){
@@ -118,6 +158,8 @@ async function processUserCommand(text,fromWake){
  const clean=text.trim();if(!clean)return;
  const send=$('#chatSend');if(send){send.disabled=true;send.classList.add('sending');send.innerHTML='<span>Thinking</span><b>…</b>'}
  addMessage('user',clean);chatHistory.push({role:'user',content:clean});
+ let persistenceError=null;
+ if(currentUser&&supabaseClient){try{await ensureConversation(clean);await persistChatMessage('user',clean)}catch(err){persistenceError=err;console.error('Could not save user message:',err)}}
  const messages=$('#chatMessages');const pending=document.createElement('div');pending.className='message assistant-message typing-indicator';pending.innerHTML='<div class="message-avatar">✳</div><div class="message-body"><strong>ULTRON</strong><p><i></i><i></i><i></i></p></div>';messages.append(pending);messages.scrollTop=messages.scrollHeight;
  let reply='';const actionReply=runAppCommand(clean);
  if(actionReply!==null){reply=actionReply;}
@@ -134,6 +176,7 @@ async function processUserCommand(text,fromWake){
   if(!currentUser)reply+='\n\nSign in under Settings to use the connected AI service and private cloud workspace.';
  }
  chatHistory.push({role:'assistant',content:reply});chatHistory=chatHistory.slice(-12);
+ if(currentUser&&supabaseClient&&currentConversationId&&!persistenceError){try{await persistChatMessage('assistant',reply);await loadConversationHistory()}catch(err){console.error('Could not save assistant message:',err);toast('Reply received, but chat history could not be saved.')}}
  pending.remove();if(send){send.disabled=false;send.classList.remove('sending');send.innerHTML='<span>Send</span><b>↗</b>'}addMessage('assistant',reply);voiceStatus(actionReply!==null?'Command completed.':currentUser?'AI response ready.':'Demo mode. Sign in to enable real AI.');
  if(fromWake||$('#view-voice').classList.contains('active-view'))await speakText(reply);
  if(wakeEnabled&&fromWake)setTimeout(startWakeListener,700);
@@ -393,7 +436,7 @@ async function refreshAccount(){
  $('#cloudBadge').textContent=currentUser?'Signed in':'Sign in required';
  $('#aiStatus').textContent=currentUser?'AI requests use the protected server function when it is deployed and configured.':'Sign in and configure the server-side provider secret to enable real AI.';
  $('#aiBadge').textContent=currentUser?'Backend setup required':'Setup required';$('#assistantStatus').innerHTML='<i></i> '+(currentUser?'Signed in · AI backend setup may still be required':'Demo mode · sign in to enable AI');
- if(currentUser){await loadCloudData();await loadOwnerConsole()}else{$('#ownerNav').hidden=true;if($('#view-owner').classList.contains('active-view'))navigate('settings')}
+ if(currentUser){await loadCloudData();await loadConversationHistory();await loadOwnerConsole()}else{currentConversationId=null;await loadConversationHistory();$('#ownerNav').hidden=true;if($('#view-owner').classList.contains('active-view'))navigate('settings')}
 }
 async function loadCloudData(){
  try{
