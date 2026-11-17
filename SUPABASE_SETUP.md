@@ -40,9 +40,12 @@ A publishable key is public-client configuration. RLS must remain enabled. Never
 
 In Supabase Function Secrets, set:
 
-- `OPENAI_API_KEY` — private provider API key.
-- `OPENAI_MODEL` — a model identifier enabled for the provider account.
+- `GEMINI_API_KEY` — private Google AI Studio key (recommended low-cost starting point).
+- `GEMINI_MODEL` — `gemini-3.6-flash` (or a model available to your account).
+- `AI_PROVIDER` — `gemini`.
 - `SUPABASE_PUBLISHABLE_KEYS` — JSON containing the project's publishable key under the `default` property, as expected by the AI function.
+
+Alternatively, configure `OPENAI_API_KEY`, `OPENAI_MODEL`, and set `AI_PROVIDER=openai`. The free Gemini tier has rate limits and its terms allow submitted content to be used to improve Google's products; do not send sensitive information through it.
 
 Deploy `supabase/functions/ultron-chat` with JWT verification enabled. The function enforces a fixed starter limit of 30 requests per user per rolling hour. Also configure provider spending limits and monitoring.
 
