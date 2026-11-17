@@ -167,10 +167,24 @@ async function processUserCommand(text,fromWake){
   voiceStatus('Thinking…');
   try{
    const {data,error}=await supabaseClient.functions.invoke('ultron-chat',{body:{message:clean,history:chatHistory.slice(-11,-1)}});
-   if(error)throw error;
-   if(!data?.reply)throw new Error('No AI reply returned');
-   reply=data.reply;$('#aiBadge').textContent='Connected';$('#aiStatus').textContent='The protected AI endpoint returned a response successfully.';$('#assistantStatus').innerHTML='<i></i> AI connected · voice replies available';
-  }catch(error){console.error('ULTRON AI request failed',error);reply='I could not reach my AI service. The backend may not be deployed or configured yet.';$('#aiBadge').textContent='Unavailable';$('#assistantStatus').innerHTML='<i></i> AI backend unavailable · check setup'}
+   if(error){
+    let serverMessage='';
+    try{if(error.context?.clone){const payload=await error.context.clone().json();serverMessage=payload?.error||''}}catch{}
+    throw new Error(serverMessage||error.message||'AI request failed');
+   }
+   if(!data?.reply)throw new Error(data?.error||'No AI reply returned');
+   reply=data.reply;$('#aiBadge').textContent='Connected';
+   const providerLabel=data.provider?data.provider.toUpperCase():'AI provider';
+   $('#aiStatus').textContent='Connected to '+providerLabel+(data.model?' · '+data.model:'')+'.';
+   $('#assistantStatus').innerHTML='<i></i> AI connected · voice replies available';
+  }catch(error){
+   console.error('ULTRON AI request failed',error);
+   const detail=error instanceof Error?error.message:'The AI service is unavailable.';
+   reply=detail;
+   $('#aiBadge').textContent='Unavailable';
+   $('#aiStatus').textContent=detail;
+   $('#assistantStatus').innerHTML='<i></i> AI backend unavailable · check setup';
+  }
  }else{
   reply=localReply(clean);
   if(!currentUser)reply+='\n\nSign in under Settings to use the connected AI service and private cloud workspace.';
