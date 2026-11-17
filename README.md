@@ -37,7 +37,7 @@ These features remain unconfigured and are not represented as working integratio
 - Gmail and Google Calendar OAuth.
 - WhatsApp Business API.
 - Paid subscription checkout and payment-provider webhooks.
-- Live AI until `OPENAI_API_KEY` and `OPENAI_MODEL` are configured as Supabase Edge Function secrets.
+- Live AI until a provider is configured in Supabase Function Secrets. Gemini is the recommended low-cost starting point; OpenAI is also supported. See `AI_BACKEND_SETUP.md`.
 
 Voice input relies on browser speech-recognition support and microphone permission. Gallery uploads are temporary in the current browser session.
 
