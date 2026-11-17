@@ -127,3 +127,6 @@ body.light-mode .membership-status{background:#f4faf7}
 .owner-directory-row .danger-button{flex-shrink:0}
 body.light-mode .owner-management-form input{background:#f6faf8;color:#1c3032}
 @media(max-width:620px){.owner-management-form{align-items:stretch;flex-direction:column}.owner-management-form input{width:100%}.owner-directory-row{align-items:flex-start;flex-direction:column}}
+
+/* ChatGPT-style conversation history */
+.chat-history-heading{margin:24px 12px 9px;color:var(--muted,#8993a2);font-size:10px;font-weight:700;letter-spacing:.14em}.chat-history-list{display:flex;flex-direction:column;gap:4px;max-height:34vh;overflow:auto;padding:0 4px}.chat-history-empty{padding:8px 10px;color:var(--muted,#8993a2);font-size:12px;line-height:1.5}.chat-history-item{display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;border:0;border-radius:9px;background:transparent;color:var(--text,#e8edf5);text-align:left;font:inherit;font-size:12px;cursor:pointer}.chat-history-item:hover,.chat-history-item.active{background:rgba(130,145,170,.13)}.chat-history-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.chat-history-item small{color:var(--muted,#8993a2);font-size:10px}
